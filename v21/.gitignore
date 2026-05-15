@@ -1,0 +1,6 @@
+__pycache__
+.cache
+.venv
+fonts
+logs
+output
