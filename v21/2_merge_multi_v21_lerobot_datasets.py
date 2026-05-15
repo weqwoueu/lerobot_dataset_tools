@@ -1,4 +1,4 @@
-from v21.dataset_creator.merged_dataset_creator import MergedDatasetCreator
+from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 
 # dataset_ids = ["standard/pika_4paper_blackbox", "standard/pika_4paper_tanbox"]
 # new_repo_id = "standard/pika_place_pocket_pack_tissues_in_box"
@@ -22,8 +22,14 @@ from v21.dataset_creator.merged_dataset_creator import MergedDatasetCreator
 # new_repo_id = "standard/darwin02_0401"
 # dataset_ids = ["standard/darwin02_0401", "standard/darwin02_0408"]
 # new_repo_id = "standard/darwin02_0410"
-dataset_ids = ["standard/darwin02_0501_2", "standard/darwin02_0502", "standard/darwin02_0502_error"]
-new_repo_id = "standard/darwin02_0503"
+# dataset_ids = ["standard/darwin02_0501_2", "standard/darwin02_0502", "standard/darwin02_0502_error"]
+# new_repo_id = "standard/darwin02_0503"
+# dataset_ids = ["/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_gray_small_init_nonidle", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_gray_small_nonidle", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_green_small_nonidle"]
+# new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt"
+# dataset_ids = ["/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_gray_small_init_nonidle", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_gray_small_nonidle", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_green_small_nonidle"]
+# new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt"
+dataset_ids = ["/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_t"]
+new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"
 tolerance_s = 1e-4
 
 MergedDatasetCreator().create(dataset_ids, new_repo_id, tolerance_s)

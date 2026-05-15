@@ -1,7 +1,6 @@
 v21 中存储的是lerobot v2.1 版本数据集的处理工具
 
-参考自 https://github.com/jackvial/lerobot-data-studio
-支持多个v21版本的lerobot数据集的合并。
+# 可视化数据集的一个工具：https://io-ai.tech/lerobot/ # 直接将数据集拖进去即可
 
 # 运行环境
 lerobot 0.3.3 版本，不支持 0.1.0 和 0.4.0
@@ -51,6 +50,9 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
 
 # 2. 合并n个lerobot v2.1的数据集
     ```shell
+    # 参考自 https://github.com/jackvial/lerobot-data-studio
+    # 支持多个v21版本的lerobot数据集的合并。
+
     # 手动将需要合并的数据集填入 2_merge_multi_v21_lerobot_datasets.py 的 list 中
     python 2_merge_multi_v21_lerobot_datasets.py
 
@@ -160,6 +162,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
 # 10. 源数据集的mp4编码时gop参数编码错误，用该工具重编码（非原地），生成新数据集，并把旧 mp4 备份到 output_dir/old_video/
     ```shell
     # 检测数据集视频 GOP/关键帧间隔
+    # 默认只抽查前 10 个视频；如需全量检查可加 --max_check_videos 0
     # 关键帧间隔过长，会导致dataloader随机读取视频帧耗时更长，导致训练时，gpu等待batch数据
     python 10_reencode_video_gop.py \
         --dataset_dir .cache/huggingface/lerobot/standard/darwin02_0503_trim_tail_force_delta \
@@ -204,6 +207,74 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         # --trim_end_frames 0
         #   --dry_run # 预览
         #  --video_codec source # 严格沿用原lerobot数据集相同的视频编码格式。否则默认用h264_nvenc，在4090上编码速度快
+    ```
+
+# 12. kai0 的临时工具。用robocoin采的数据集，key name等参数和kai0的数据集不一致，用该工具对齐，除了视频编码方式不对齐。
+    ```shell
+    # 将 piper 叠衣服数据集对齐到 Task_A/dagger 的 LeRobot v2.1 元数据格式。
+    # 默认不会修改源数据集，而是生成一个新的输出目录。脚本只做 key/prompt/meta
+    # 对齐和文件复制，不转码视频，也不改写 parquet 内容。
+    python 12_convert_piper_to_task_a_dagger.py \
+        --source_dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt \
+        --target_reference_dir /home/standard/workspace/test/kai0/data/Task_A/dagger \
+        --dry_run
+
+    python 12_convert_piper_to_task_a_dagger.py \
+        --source_dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt \
+        --target_reference_dir /home/standard/workspace/test/kai0/data/Task_A/dagger \
+        --output_dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned
+    ```
+
+# 13. 空间增强。kai0/train_deploy_alignment/data_augment/space_mirroring.py
+    注意，代码中：
+    1. 对 observation.images.top_head / observation.images.hand_left / observation.images.hand_right 下的视频进行翻转；
+    2. 交换 observation.images.hand_left / observation.images.hand_right 两个文件夹；
+    因此如果数据集不符合上面的要求，需要修改源码。
+
+    ```shell
+    # 仅生成镜像的数据集
+    python 13_kai0_space_mirroring.py \
+        create-mirror \
+        --src-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec \
+        --tgt-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_s \
+        --num-workers 16
+    #   [--fps 30] [--robot-type agilex] [--left-dim 7] [--right-dim 7] [--num-workers 4] [--features-json /path/to/features.json] [--force]
+    ```
+
+# 14. 时间增强。kai0/train_deploy_alignment/data_augment/time_scaling.py
+    ```shell
+    python 14_kai0_time_scaling.py \
+        --src_path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec \
+        --tgt_path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_t \
+        --repo_id time_scaling_dataset \
+        --extraction_factor 2 \
+        --num-workers 16
+        # --extraction_factor 2，隔帧抽，视频加速1倍
+    ```
+
+# 15. 导出数据集视频编码参数配置，供后续工具按指定参数生成视频
+    ```shell
+    # 默认每个 video key 均匀抽查 10 个视频，打印摘要并写 JSON 配置
+    python 15_export_video_format_config.py \
+        --dataset-dir /home/standard/workspace/test/kai0/data/Task_A/advantage \
+        --output-json ./video_format_config.json
+
+    # 全量探测所有视频
+    python 15_export_video_format_config.py \
+        --dataset-dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned \
+        --output-json ./piper_fold_tshirt_task_a_aligned_video_format_config_full.json \
+        --max-videos-per-key 0
+    ```
+
+# 16. 根据视频参数配置重编码数据集视频，非原地生成 _recodec 新数据集
+    ```shell
+    python 16_recodec_dataset_with_video_config.py \
+        --dataset-dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned \
+        --config-json ./video_format_config.json \
+        --workers 16
+
+    # 默认输出到输入数据集同级目录: <dataset_name>_recodec
+    # 可用 --output-dir 指定输出目录；可用 --dry-run 只打印计划。
     ```
 
 

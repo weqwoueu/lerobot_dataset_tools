@@ -1,0 +1,1556 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-15T10:20:42.406854+00:00",
+  "dataset_dir": "/home/standard/workspace/test/kai0/data/Task_A/advantage",
+  "dataset_info": {
+    "codebase_version": "v2.1",
+    "robot_type": "agilex",
+    "fps": 30,
+    "video_path": "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4",
+    "total_episodes": 3055,
+    "total_frames": 3362369
+  },
+  "sampling": {
+    "max_videos_per_key": 10,
+    "mode": "evenly_sampled"
+  },
+  "video_keys": {
+    "observation.images.hand_left": {
+      "total_found": 3055,
+      "sample_count": 10,
+      "representative": {
+        "path": "videos/chunk-000/observation.images.hand_left/episode_000000.mp4",
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "has_b_frames": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1115004,
+        "nb_frames": 1800,
+        "nb_read_frames": 1800,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "fps": 30.0,
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "keyframes": 150,
+        "gop": 12,
+        "max_keyframe_gap_s": 0.4000000000000057,
+        "mean_keyframe_gap_s": 0.4
+      },
+      "encoding_params": {
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "ffmpeg_encoder": "libx264",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "fps": 30.0,
+        "fps_rate": "30/1",
+        "gop": 12,
+        "keyint_min": 12,
+        "sc_threshold": 0,
+        "has_b_frames": 0,
+        "bf": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1115004,
+        "movflags": "+faststart",
+        "ffmpeg_output_args": [
+          "-c:v",
+          "libx264",
+          "-profile:v",
+          "main",
+          "-level:v",
+          "3",
+          "-tag:v",
+          "avc1",
+          "-refs",
+          "1",
+          "-g",
+          "12",
+          "-keyint_min",
+          "12",
+          "-sc_threshold",
+          "0",
+          "-bf",
+          "0",
+          "-b:v",
+          "1115004",
+          "-pix_fmt",
+          "yuv420p",
+          "-r",
+          "30/1",
+          "-movflags",
+          "+faststart"
+        ]
+      },
+      "summary": {
+        "codec_name": {
+          "representative": "h264",
+          "unique": [
+            "h264"
+          ],
+          "consistent": true
+        },
+        "codec_tag_string": {
+          "representative": "avc1",
+          "unique": [
+            "avc1"
+          ],
+          "consistent": true
+        },
+        "profile": {
+          "representative": "Main",
+          "unique": [
+            "Main"
+          ],
+          "consistent": true
+        },
+        "pix_fmt": {
+          "representative": "yuv420p",
+          "unique": [
+            "yuv420p"
+          ],
+          "consistent": true
+        },
+        "width": {
+          "representative": 640,
+          "unique": [
+            640
+          ],
+          "consistent": true
+        },
+        "height": {
+          "representative": 480,
+          "unique": [
+            480
+          ],
+          "consistent": true
+        },
+        "bit_rate": {
+          "representative": 1115004,
+          "unique": [
+            1115004,
+            1168933,
+            1145025,
+            1150159,
+            953094,
+            995314,
+            962026,
+            1002836,
+            1475077,
+            885340
+          ],
+          "consistent": false,
+          "min": 885340,
+          "max": 1475077,
+          "mean": 1085280.8
+        },
+        "nb_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "nb_read_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "avg_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "r_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "fps": {
+          "representative": 30.0,
+          "unique": [
+            30.0
+          ],
+          "consistent": true,
+          "min": 30.0,
+          "max": 30.0,
+          "mean": 30.0
+        },
+        "has_b_frames": {
+          "representative": 0,
+          "unique": [
+            0
+          ],
+          "consistent": true
+        },
+        "level": {
+          "representative": 30,
+          "unique": [
+            30
+          ],
+          "consistent": true
+        },
+        "refs": {
+          "representative": 1,
+          "unique": [
+            1
+          ],
+          "consistent": true
+        },
+        "gop": {
+          "representative": 12,
+          "unique": [
+            12
+          ],
+          "consistent": true,
+          "min": 12,
+          "max": 12,
+          "mean": 12.0
+        },
+        "keyframes": {
+          "representative": 150,
+          "unique": [
+            150,
+            85,
+            109,
+            61,
+            93,
+            101,
+            106,
+            98,
+            180
+          ],
+          "consistent": false,
+          "min": 61,
+          "max": 180,
+          "mean": 113.3
+        },
+        "max_keyframe_gap_s": {
+          "representative": 0.4000000000000057,
+          "unique": [
+            0.4000000000000057,
+            0.40000000000000213
+          ],
+          "consistent": false,
+          "min": 0.40000000000000213,
+          "max": 0.4000000000000057,
+          "mean": 0.40000000000000496
+        },
+        "mean_keyframe_gap_s": {
+          "representative": 0.4,
+          "unique": [
+            0.4,
+            0.3932539642857143,
+            0.39999999999999997
+          ],
+          "consistent": false,
+          "min": 0.3932539642857143,
+          "max": 0.4,
+          "mean": 0.39932539642857134
+        },
+        "format_name": {
+          "representative": "mov,mp4,m4a,3gp,3g2,mj2",
+          "unique": [
+            "mov,mp4,m4a,3gp,3g2,mj2"
+          ],
+          "consistent": true
+        }
+      },
+      "inconsistent_fields": [],
+      "samples": [
+        {
+          "path": "videos/chunk-000/observation.images.hand_left/episode_000000.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1115004,
+          "nb_frames": 1800,
+          "nb_read_frames": 1800,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-000/observation.images.hand_left/episode_000339.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1168933,
+          "nb_frames": 997,
+          "nb_read_frames": 997,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 85,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.40000000000000213,
+          "mean_keyframe_gap_s": 0.3932539642857143
+        },
+        {
+          "path": "videos/chunk-000/observation.images.hand_left/episode_000679.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1145025,
+          "nb_frames": 1304,
+          "nb_read_frames": 1304,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 109,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_left/episode_001018.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1150159,
+          "nb_frames": 724,
+          "nb_read_frames": 724,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 61,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.40000000000000213,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_left/episode_001357.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 953094,
+          "nb_frames": 1116,
+          "nb_read_frames": 1116,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 93,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_left/episode_001697.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 995314,
+          "nb_frames": 1210,
+          "nb_read_frames": 1210,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 101,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_left/episode_002036.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 962026,
+          "nb_frames": 1269,
+          "nb_read_frames": 1269,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 106,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_left/episode_002375.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1002836,
+          "nb_frames": 1794,
+          "nb_read_frames": 1794,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_left/episode_002715.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1475077,
+          "nb_frames": 1169,
+          "nb_read_frames": 1169,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 98,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-003/observation.images.hand_left/episode_003054.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 885340,
+          "nb_frames": 2157,
+          "nb_read_frames": 2157,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 180,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        }
+      ],
+      "warnings": []
+    },
+    "observation.images.hand_right": {
+      "total_found": 3055,
+      "sample_count": 10,
+      "representative": {
+        "path": "videos/chunk-000/observation.images.hand_right/episode_000000.mp4",
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "has_b_frames": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1194442,
+        "nb_frames": 1800,
+        "nb_read_frames": 1800,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "fps": 30.0,
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "keyframes": 150,
+        "gop": 12,
+        "max_keyframe_gap_s": 0.4000000000000057,
+        "mean_keyframe_gap_s": 0.4
+      },
+      "encoding_params": {
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "ffmpeg_encoder": "libx264",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "fps": 30.0,
+        "fps_rate": "30/1",
+        "gop": 12,
+        "keyint_min": 12,
+        "sc_threshold": 0,
+        "has_b_frames": 0,
+        "bf": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1194442,
+        "movflags": "+faststart",
+        "ffmpeg_output_args": [
+          "-c:v",
+          "libx264",
+          "-profile:v",
+          "main",
+          "-level:v",
+          "3",
+          "-tag:v",
+          "avc1",
+          "-refs",
+          "1",
+          "-g",
+          "12",
+          "-keyint_min",
+          "12",
+          "-sc_threshold",
+          "0",
+          "-bf",
+          "0",
+          "-b:v",
+          "1194442",
+          "-pix_fmt",
+          "yuv420p",
+          "-r",
+          "30/1",
+          "-movflags",
+          "+faststart"
+        ]
+      },
+      "summary": {
+        "codec_name": {
+          "representative": "h264",
+          "unique": [
+            "h264"
+          ],
+          "consistent": true
+        },
+        "codec_tag_string": {
+          "representative": "avc1",
+          "unique": [
+            "avc1"
+          ],
+          "consistent": true
+        },
+        "profile": {
+          "representative": "Main",
+          "unique": [
+            "Main"
+          ],
+          "consistent": true
+        },
+        "pix_fmt": {
+          "representative": "yuv420p",
+          "unique": [
+            "yuv420p"
+          ],
+          "consistent": true
+        },
+        "width": {
+          "representative": 640,
+          "unique": [
+            640
+          ],
+          "consistent": true
+        },
+        "height": {
+          "representative": 480,
+          "unique": [
+            480
+          ],
+          "consistent": true
+        },
+        "bit_rate": {
+          "representative": 1194442,
+          "unique": [
+            1194442,
+            1160514,
+            1182611,
+            1226855,
+            902871,
+            963898,
+            1130615,
+            1029483,
+            1304984,
+            1009238
+          ],
+          "consistent": false,
+          "min": 902871,
+          "max": 1304984,
+          "mean": 1110551.1
+        },
+        "nb_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "nb_read_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "avg_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "r_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "fps": {
+          "representative": 30.0,
+          "unique": [
+            30.0
+          ],
+          "consistent": true,
+          "min": 30.0,
+          "max": 30.0,
+          "mean": 30.0
+        },
+        "has_b_frames": {
+          "representative": 0,
+          "unique": [
+            0
+          ],
+          "consistent": true
+        },
+        "level": {
+          "representative": 30,
+          "unique": [
+            30
+          ],
+          "consistent": true
+        },
+        "refs": {
+          "representative": 1,
+          "unique": [
+            1
+          ],
+          "consistent": true
+        },
+        "gop": {
+          "representative": 12,
+          "unique": [
+            12
+          ],
+          "consistent": true,
+          "min": 12,
+          "max": 12,
+          "mean": 12.0
+        },
+        "keyframes": {
+          "representative": 150,
+          "unique": [
+            150,
+            84,
+            109,
+            61,
+            93,
+            101,
+            106,
+            98,
+            180
+          ],
+          "consistent": false,
+          "min": 61,
+          "max": 180,
+          "mean": 113.2
+        },
+        "max_keyframe_gap_s": {
+          "representative": 0.4000000000000057,
+          "unique": [
+            0.4000000000000057,
+            0.40000000000000213
+          ],
+          "consistent": false,
+          "min": 0.40000000000000213,
+          "max": 0.4000000000000057,
+          "mean": 0.40000000000000535
+        },
+        "mean_keyframe_gap_s": {
+          "representative": 0.4,
+          "unique": [
+            0.4,
+            0.39999999999999997
+          ],
+          "consistent": false,
+          "min": 0.39999999999999997,
+          "max": 0.4,
+          "mean": 0.39999999999999997
+        },
+        "format_name": {
+          "representative": "mov,mp4,m4a,3gp,3g2,mj2",
+          "unique": [
+            "mov,mp4,m4a,3gp,3g2,mj2"
+          ],
+          "consistent": true
+        }
+      },
+      "inconsistent_fields": [],
+      "samples": [
+        {
+          "path": "videos/chunk-000/observation.images.hand_right/episode_000000.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1194442,
+          "nb_frames": 1800,
+          "nb_read_frames": 1800,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-000/observation.images.hand_right/episode_000339.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1160514,
+          "nb_frames": 997,
+          "nb_read_frames": 997,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 84,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-000/observation.images.hand_right/episode_000679.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1182611,
+          "nb_frames": 1304,
+          "nb_read_frames": 1304,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 109,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_right/episode_001018.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1226855,
+          "nb_frames": 724,
+          "nb_read_frames": 724,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 61,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.40000000000000213,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_right/episode_001357.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 902871,
+          "nb_frames": 1116,
+          "nb_read_frames": 1116,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 93,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-001/observation.images.hand_right/episode_001697.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 963898,
+          "nb_frames": 1210,
+          "nb_read_frames": 1210,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 101,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_right/episode_002036.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1130615,
+          "nb_frames": 1269,
+          "nb_read_frames": 1269,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 106,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_right/episode_002375.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1029483,
+          "nb_frames": 1794,
+          "nb_read_frames": 1794,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.hand_right/episode_002715.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1304984,
+          "nb_frames": 1169,
+          "nb_read_frames": 1169,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 98,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-003/observation.images.hand_right/episode_003054.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1009238,
+          "nb_frames": 2157,
+          "nb_read_frames": 2157,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 180,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        }
+      ],
+      "warnings": []
+    },
+    "observation.images.top_head": {
+      "total_found": 3055,
+      "sample_count": 10,
+      "representative": {
+        "path": "videos/chunk-000/observation.images.top_head/episode_000000.mp4",
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "has_b_frames": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1405363,
+        "nb_frames": 1800,
+        "nb_read_frames": 1800,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "fps": 30.0,
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "keyframes": 150,
+        "gop": 12,
+        "max_keyframe_gap_s": 0.4000000000000057,
+        "mean_keyframe_gap_s": 0.4
+      },
+      "encoding_params": {
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "ffmpeg_encoder": "libx264",
+        "profile": "Main",
+        "pix_fmt": "yuv420p",
+        "width": 640,
+        "height": 480,
+        "fps": 30.0,
+        "fps_rate": "30/1",
+        "gop": 12,
+        "keyint_min": 12,
+        "sc_threshold": 0,
+        "has_b_frames": 0,
+        "bf": 0,
+        "level": 30,
+        "refs": 1,
+        "bit_rate": 1405363,
+        "movflags": "+faststart",
+        "ffmpeg_output_args": [
+          "-c:v",
+          "libx264",
+          "-profile:v",
+          "main",
+          "-level:v",
+          "3",
+          "-tag:v",
+          "avc1",
+          "-refs",
+          "1",
+          "-g",
+          "12",
+          "-keyint_min",
+          "12",
+          "-sc_threshold",
+          "0",
+          "-bf",
+          "0",
+          "-b:v",
+          "1405363",
+          "-pix_fmt",
+          "yuv420p",
+          "-r",
+          "30/1",
+          "-movflags",
+          "+faststart"
+        ]
+      },
+      "summary": {
+        "codec_name": {
+          "representative": "h264",
+          "unique": [
+            "h264"
+          ],
+          "consistent": true
+        },
+        "codec_tag_string": {
+          "representative": "avc1",
+          "unique": [
+            "avc1"
+          ],
+          "consistent": true
+        },
+        "profile": {
+          "representative": "Main",
+          "unique": [
+            "Main"
+          ],
+          "consistent": true
+        },
+        "pix_fmt": {
+          "representative": "yuv420p",
+          "unique": [
+            "yuv420p"
+          ],
+          "consistent": true
+        },
+        "width": {
+          "representative": 640,
+          "unique": [
+            640
+          ],
+          "consistent": true
+        },
+        "height": {
+          "representative": 480,
+          "unique": [
+            480
+          ],
+          "consistent": true
+        },
+        "bit_rate": {
+          "representative": 1405363,
+          "unique": [
+            1405363,
+            1472456,
+            1303035,
+            1410149,
+            1161618,
+            1049513,
+            1076369,
+            1105731,
+            1550098,
+            1150294
+          ],
+          "consistent": false,
+          "min": 1049513,
+          "max": 1550098,
+          "mean": 1268462.6
+        },
+        "nb_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "nb_read_frames": {
+          "representative": 1800,
+          "unique": [
+            1800,
+            997,
+            1304,
+            724,
+            1116,
+            1210,
+            1269,
+            1794,
+            1169,
+            2157
+          ],
+          "consistent": false,
+          "min": 724,
+          "max": 2157,
+          "mean": 1354.0
+        },
+        "avg_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "r_frame_rate": {
+          "representative": "30/1",
+          "unique": [
+            "30/1"
+          ],
+          "consistent": true
+        },
+        "fps": {
+          "representative": 30.0,
+          "unique": [
+            30.0
+          ],
+          "consistent": true,
+          "min": 30.0,
+          "max": 30.0,
+          "mean": 30.0
+        },
+        "has_b_frames": {
+          "representative": 0,
+          "unique": [
+            0
+          ],
+          "consistent": true
+        },
+        "level": {
+          "representative": 30,
+          "unique": [
+            30
+          ],
+          "consistent": true
+        },
+        "refs": {
+          "representative": 1,
+          "unique": [
+            1
+          ],
+          "consistent": true
+        },
+        "gop": {
+          "representative": 12,
+          "unique": [
+            12
+          ],
+          "consistent": true,
+          "min": 12,
+          "max": 12,
+          "mean": 12.0
+        },
+        "keyframes": {
+          "representative": 150,
+          "unique": [
+            150,
+            84,
+            109,
+            61,
+            93,
+            101,
+            106,
+            98,
+            180
+          ],
+          "consistent": false,
+          "min": 61,
+          "max": 180,
+          "mean": 113.2
+        },
+        "max_keyframe_gap_s": {
+          "representative": 0.4000000000000057,
+          "unique": [
+            0.4000000000000057,
+            0.40000000000000213
+          ],
+          "consistent": false,
+          "min": 0.40000000000000213,
+          "max": 0.4000000000000057,
+          "mean": 0.40000000000000535
+        },
+        "mean_keyframe_gap_s": {
+          "representative": 0.4,
+          "unique": [
+            0.4,
+            0.39999999999999997
+          ],
+          "consistent": false,
+          "min": 0.39999999999999997,
+          "max": 0.4,
+          "mean": 0.39999999999999997
+        },
+        "format_name": {
+          "representative": "mov,mp4,m4a,3gp,3g2,mj2",
+          "unique": [
+            "mov,mp4,m4a,3gp,3g2,mj2"
+          ],
+          "consistent": true
+        }
+      },
+      "inconsistent_fields": [],
+      "samples": [
+        {
+          "path": "videos/chunk-000/observation.images.top_head/episode_000000.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1405363,
+          "nb_frames": 1800,
+          "nb_read_frames": 1800,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-000/observation.images.top_head/episode_000339.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1472456,
+          "nb_frames": 997,
+          "nb_read_frames": 997,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 84,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-000/observation.images.top_head/episode_000679.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1303035,
+          "nb_frames": 1304,
+          "nb_read_frames": 1304,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 109,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.top_head/episode_001018.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1410149,
+          "nb_frames": 724,
+          "nb_read_frames": 724,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 61,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.40000000000000213,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-001/observation.images.top_head/episode_001357.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1161618,
+          "nb_frames": 1116,
+          "nb_read_frames": 1116,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 93,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-001/observation.images.top_head/episode_001697.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1049513,
+          "nb_frames": 1210,
+          "nb_read_frames": 1210,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 101,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.top_head/episode_002036.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1076369,
+          "nb_frames": 1269,
+          "nb_read_frames": 1269,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 106,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.top_head/episode_002375.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1105731,
+          "nb_frames": 1794,
+          "nb_read_frames": 1794,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 150,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.4
+        },
+        {
+          "path": "videos/chunk-002/observation.images.top_head/episode_002715.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1550098,
+          "nb_frames": 1169,
+          "nb_read_frames": 1169,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 98,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        },
+        {
+          "path": "videos/chunk-003/observation.images.top_head/episode_003054.mp4",
+          "codec_name": "h264",
+          "codec_tag_string": "avc1",
+          "profile": "Main",
+          "pix_fmt": "yuv420p",
+          "width": 640,
+          "height": 480,
+          "has_b_frames": 0,
+          "level": 30,
+          "refs": 1,
+          "bit_rate": 1150294,
+          "nb_frames": 2157,
+          "nb_read_frames": 2157,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "fps": 30.0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "keyframes": 180,
+          "gop": 12,
+          "max_keyframe_gap_s": 0.4000000000000057,
+          "mean_keyframe_gap_s": 0.39999999999999997
+        }
+      ],
+      "warnings": []
+    }
+  }
+}

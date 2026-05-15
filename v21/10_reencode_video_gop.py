@@ -101,8 +101,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max_check_videos",
         type=int,
-        default=None,
-        help="检测模式最多检查多少个视频；未指定则检查全部。",
+        default=10,
+        help="检测模式最多检查多少个视频；默认只检查 10 个。设为 0 或负数表示检查全部。",
     )
     parser.add_argument(
         "--warn_gap_s",
@@ -199,12 +199,18 @@ def compute_gop_stats(video_path: Path) -> GopStats:
 
 def check_gop(dataset_dir: Path, max_videos: int | None, warn_gap_s: float) -> None:
     videos = iter_video_files(dataset_dir / "videos")
-    if max_videos is not None:
+    total_videos = len(videos)
+    if max_videos is not None and max_videos > 0:
         videos = videos[:max_videos]
     if not videos:
         raise FileNotFoundError(f"未找到 mp4: {dataset_dir / 'videos'}")
 
-    logger.info("开始检测 GOP: videos=%d, warn_gap_s=%.3f", len(videos), warn_gap_s)
+    logger.info(
+        "开始检测 GOP: checking=%d/%d videos, warn_gap_s=%.3f",
+        len(videos),
+        total_videos,
+        warn_gap_s,
+    )
     stats = [compute_gop_stats(video_path) for video_path in videos]
     warned = [
         item

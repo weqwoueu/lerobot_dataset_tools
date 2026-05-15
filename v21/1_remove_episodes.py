@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
-    from v21.dataset_creator.filtered_dataset_creator import FilteredDatasetCreator
+    from dataset_creator.filtered_dataset_creator import FilteredDatasetCreator
 except ImportError:
     # 尝试调整 sys.path 以确保能导入 dataset_creator
     current_dir = Path(__file__).resolve().parent
@@ -46,7 +46,7 @@ except ImportError:
     
     try:
         from lerobot.datasets.lerobot_dataset import LeRobotDataset
-        from v21.dataset_creator.filtered_dataset_creator import FilteredDatasetCreator
+        from dataset_creator.filtered_dataset_creator import FilteredDatasetCreator
     except ImportError as e:
         print(f"错误: 无法导入必要的模块 ({e})")
         print("请确保已安装 lerobot 并在正确的目录下运行脚本")
