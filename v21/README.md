@@ -277,4 +277,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     # 可用 --output-dir 指定输出目录；可用 --dry-run 只打印计划。
     ```
 
-
+# 17. 将lerobot v20转换成v21（未实际测试）
+    ```shell
+    python 17_convert_dataset_v20_to_v21.py
+    ```

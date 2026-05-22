@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from datasets import concatenate_datasets
+from datasets import Value, concatenate_datasets
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import get_episode_data_index
 from lerobot.constants import HF_LEROBOT_HOME
@@ -13,6 +13,15 @@ from lerobot.constants import HF_LEROBOT_HOME
 from .dataset_creator import DatasetCreator
 
 logger = logging.getLogger(__name__)
+
+
+DATASET_SCALAR_FEATURE_DTYPES = {
+    "timestamp": "float32",
+    "frame_index": "int64",
+    "episode_index": "int64",
+    "index": "int64",
+    "task_index": "int64",
+}
 
 
 class MergedDatasetCreator(DatasetCreator):
@@ -222,6 +231,7 @@ class MergedDatasetCreator(DatasetCreator):
                     batched=False,
                     load_from_cache_file=False,
                 )
+                episode_hf_data = self._cast_scalar_features_for_merge(episode_hf_data)
                 all_hf_datasets.append(episode_hf_data)
 
                 merged_episode_idx += 1
@@ -229,6 +239,14 @@ class MergedDatasetCreator(DatasetCreator):
         merged_hf_dataset = concatenate_datasets(all_hf_datasets)
 
         return all_episodes, all_episode_stats, all_tasks, merged_hf_dataset
+
+    @staticmethod
+    def _cast_scalar_features_for_merge(hf_dataset):
+        """Normalize scalar feature dtypes before concatenating source datasets."""
+        for feature_key, dtype in DATASET_SCALAR_FEATURE_DTYPES.items():
+            if feature_key in hf_dataset.features:
+                hf_dataset = hf_dataset.cast_column(feature_key, Value(dtype))
+        return hf_dataset
 
     def _copy_merged_videos(self, datasets: List[LeRobotDataset], temp_root: Path, chunks_size: int) -> None:
         """Copy video files from all source datasets to the merged dataset.
