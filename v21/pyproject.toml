@@ -25,6 +25,8 @@ dependencies = [
     "opencv-python>=4.9.0",
     "imageio[ffmpeg]>=2.34.0",
     "ruff>=0.8.0",
+    "matplotlib>=3.10.9",
+    "seaborn>=0.13.2",
 ]
 
 [project.urls]

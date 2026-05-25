@@ -20,6 +20,33 @@ def get_default_lerobot_home() -> Path:
     return Path(os.environ.get("LEROBOT_HOME", Path.home() / ".cache" / "huggingface" / "lerobot"))
 
 
+def short_text(text: object, max_len: int = 80) -> str:
+    text = str(text)
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
+def format_task_index(value: object) -> str:
+    if value is None:
+        return "<None>"
+    try:
+        import pandas as pd
+
+        if pd.isna(value):
+            return "<NA>"
+    except Exception:
+        pass
+    try:
+        return str(int(value))
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def sort_task_indices(values) -> list:
+    return sorted(values, key=format_task_index)
+
+
 def check_dataset(repo_id: str, root: Path | None = None):
     lerobot_home = root or get_default_lerobot_home()
     dataset_dir = lerobot_home / repo_id
@@ -272,47 +299,100 @@ def check_dataset(repo_id: str, root: Path | None = None):
     # ── 5.5 检查 parquet 中的 task_index 是否与 tasks.jsonl 一致 ──
     print()
     print("─" * 70)
-    print("[5.5/6] 检查 parquet 中的 task_index 是否与 tasks.jsonl 一致 ...")
+    print("[5.5/6] 统计 parquet 中的 task_index 并检查 tasks.jsonl 一致性 ...")
     try:
         import pandas as pd
         
         print("  正在读取所有 parquet 文件提取 task_index (这可能需要一些时间)...")
         all_task_indices = set()
         file_task_map = {}
+        task_stats = {}
+        files_without_task_index = []
         
         # actual_parquets 在第 4 步已经获取到了
         if 'actual_parquets' in locals() and actual_parquets:
             for pf in actual_parquets:
+                rel_path = str(pf.relative_to(dataset_dir))
                 try:
-                    df = pd.read_parquet(pf, columns=["task_index"])
+                    try:
+                        df = pd.read_parquet(pf, columns=["task_index", "episode_index"])
+                    except Exception:
+                        df = pd.read_parquet(pf, columns=["task_index"])
+
                     unique_indices = set(df["task_index"].unique().tolist())
                     all_task_indices.update(unique_indices)
-                    file_task_map[str(pf.relative_to(dataset_dir))] = unique_indices
-                except Exception as e:
+                    file_task_map[rel_path] = unique_indices
+
+                    task_counts = df["task_index"].value_counts(dropna=False)
+                    for task_index, frame_count in task_counts.items():
+                        stats = task_stats.setdefault(
+                            task_index,
+                            {
+                                "frames": 0,
+                                "files": set(),
+                                "episodes": set(),
+                            },
+                        )
+                        stats["frames"] += int(frame_count)
+                        stats["files"].add(rel_path)
+
+                        if "episode_index" in df.columns:
+                            episode_indices = df.loc[df["task_index"] == task_index, "episode_index"].dropna().unique()
+                            stats["episodes"].update(int(ep_idx) for ep_idx in episode_indices)
+                except Exception:
                     # 有些 parquet 可能没有 task_index 列
-                    pass
+                    files_without_task_index.append(rel_path)
             
-            print(f"  parquet 文件中包含的 task_index: {sorted(all_task_indices)}")
+            print(f"  parquet 文件中包含的 task_index: {sort_task_indices(all_task_indices)}")
+
+            if task_stats:
+                total_task_frames = sum(stats["frames"] for stats in task_stats.values())
+                print(f"\n  task_index 统计:")
+                print(f"    {'task_index':>10}  {'frames':>12}  {'占比':>7}  {'files':>7}  {'episodes':>9}  task")
+                for task_index in sort_task_indices(task_stats.keys()):
+                    stats = task_stats[task_index]
+                    frames = stats["frames"]
+                    ratio = frames / total_task_frames if total_task_frames else 0
+                    task_desc = tasks_in_meta.get(task_index, "<未在 tasks.jsonl 中定义>")
+                    episode_count = len(stats["episodes"]) if stats["episodes"] else "未知"
+                    print(
+                        f"    {format_task_index(task_index):>10}  "
+                        f"{frames:>12,}  "
+                        f"{ratio:>6.2%}  "
+                        f"{len(stats['files']):>7}  "
+                        f"{episode_count:>9}  "
+                        f"{short_text(task_desc)}"
+                    )
+
+                print(f"    {'合计':>10}  {total_task_frames:>12,}  {'100.00%':>7}  "
+                      f"{len(actual_parquets):>7}  {len(episodes):>9}")
+
+            if files_without_task_index:
+                print(f"\n  ⚠️  有 {len(files_without_task_index)} 个 parquet 文件无法读取 task_index 列:")
+                for fname in files_without_task_index[:10]:
+                    print(f"     ⚠️  {fname}")
+                if len(files_without_task_index) > 10:
+                    print(f"     ... 还有 {len(files_without_task_index) - 10} 个未列出")
             
             if tasks_in_meta:
                 missing = all_task_indices - set(tasks_in_meta.keys())
                 extra = set(tasks_in_meta.keys()) - all_task_indices
                 
                 if missing:
-                    print(f"  ❌ 错误: parquet 中存在 tasks.jsonl 未定义的 task_index: {sorted(missing)}")
+                    print(f"  ❌ 错误: parquet 中存在 tasks.jsonl 未定义的 task_index: {sort_task_indices(missing)}")
                     for fname, indices in file_task_map.items():
                         file_missing = indices & missing
                         if file_missing:
-                            print(f"     {fname} 包含: {sorted(file_missing)}")
+                            print(f"     {fname} 包含: {sort_task_indices(file_missing)}")
                     print(f"  💡 提示: 可以使用 tools/lerobot_dataset_tools/3_fix_task_index.py 修复此问题")
                 else:
                     print(f"  ✅ 所有 parquet 中的 task_index 都已在 tasks.jsonl 中定义")
                     
                 if extra:
-                    print(f"  ℹ️  提示: tasks.jsonl 中定义了但未使用的 task_index: {sorted(extra)}")
+                    print(f"  ℹ️  提示: tasks.jsonl 中定义了但未使用的 task_index: {sort_task_indices(extra)}")
             else:
                 if all_task_indices:
-                    print(f"  ⚠️  parquet 中包含 task_index {sorted(all_task_indices)}，但 tasks.jsonl 不存在或为空")
+                    print(f"  ⚠️  parquet 中包含 task_index {sort_task_indices(all_task_indices)}，但 tasks.jsonl 不存在或为空")
         else:
             print("  ⚠️  未找到 parquet 文件，跳过检查")
             

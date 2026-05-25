@@ -18,6 +18,12 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         --root /home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/darwin02_0501_2 \
         --output_dir ./output
 
+    python 0_plot_lerobot_distribution.py \
+        --repo_id my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t \
+        --root /home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t \
+        --output_dir ./output \
+        --max_episodes 100
+
     # 会输出异常值所在的episode，和异常比例。
     ```
 
@@ -126,6 +132,10 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         dagger/piper_fold_tshirt_green_small \
         --root /home/standard/workspace/test/kai0/data/standard_Task_A
     # 查出245和474数据集缺少数据，到https://io-ai.tech/lerobot上加载数据集，然后删除掉缺失的episode，再导出到本地即可
+
+    python 5_check_dataset.py \
+        my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t \
+        --root /home/standard/workspace/test/kai0/data
 ```
 
 # 6. darwin02数据集，将首帧的六维力传感器的force部分作为offset，修正episode中其后的每一帧
@@ -222,62 +232,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     python 12_convert_piper_to_task_a_dagger.py \
         --source_dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt \
         --target_reference_dir /home/standard/workspace/test/kai0/data/Task_A/dagger \
-        --output_dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned
-    ```
-
-# 13. 空间增强。kai0/train_deploy_alignment/data_augment/space_mirroring.py
-    注意，代码中：
-    1. 对 observation.images.top_head / observation.images.hand_left / observation.images.hand_right 下的视频进行翻转；
-    2. 交换 observation.images.hand_left / observation.images.hand_right 两个文件夹；
-    因此如果数据集不符合上面的要求，需要修改源码。
-
-    ```shell
-    # 仅生成镜像的数据集
-    python 13_kai0_space_mirroring.py \
-        create-mirror \
-        --src-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec \
-        --tgt-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_s \
-        --num-workers 16
-    #   [--fps 30] [--robot-type agilex] [--left-dim 7] [--right-dim 7] [--num-workers 4] [--features-json /path/to/features.json] [--force]
-    ```
-
-# 14. 时间增强。kai0/train_deploy_alignment/data_augment/time_scaling.py
-    ```shell
-    python 14_kai0_time_scaling.py \
-        --src_path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec \
-        --tgt_path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_t \
-        --repo_id time_scaling_dataset \
-        --extraction_factor 2 \
-        --num-workers 16
-        # --extraction_factor 2，隔帧抽，视频加速1倍
-    ```
-
-# 15. 导出数据集视频编码参数配置，供后续工具按指定参数生成视频
-    ```shell
-    # 默认每个 video key 均匀抽查 10 个视频，打印摘要并写 JSON 配置
-    python 15_export_video_format_config.py \
-        --dataset-dir /home/standard/workspace/test/kai0/data/Task_A/advantage \
-        --output-json ./video_format_config.json
-
-    # 全量探测所有视频
-    python 15_export_video_format_config.py \
-        --dataset-dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned \
-        --output-json ./piper_fold_tshirt_task_a_aligned_video_format_config_full.json \
-        --max-videos-per-key 0
-    ```
-
-# 16. 根据视频参数配置重编码数据集视频，非原地生成 _recodec 新数据集
-    ```shell
-    python 16_recodec_dataset_with_video_config.py \
-        --dataset-dir /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned \
-        --config-json ./video_format_config.json \
-        --workers 16
-
-    # 默认输出到输入数据集同级目录: <dataset_name>_recodec
-    # 可用 --output-dir 指定输出目录；可用 --dry-run 只打印计划。
-    ```
-
-# 17. 将lerobot v20转换成v21（未实际测试）
-    ```shell
-    python 17_convert_dataset_v20_to_v21.py
-    ```
+        --output_dir /home/sta 
+        
+        
+        

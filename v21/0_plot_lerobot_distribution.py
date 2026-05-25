@@ -1,64 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-LeRobot数据集数据分布提琴图绘制工具
+LeRobot 数据集数据分布 PDF 报告工具
 
-功能说明：
-    加载LeRobot格式的数据集，提取状态和动作数据，绘制提琴图展示数据分布
-
-主要功能：
-    1. 加载LeRobot数据集（从本地目录）
-    2. 提取observation.state和action数据
-    3. 绘制提琴图展示各维度的数据分布
-    4. 支持保存图片到文件
-
-配置参数：
-    repo_id: LeRobot数据集的repo id（必需）
-    root: 数据集根目录（可选）
-    output_path: 输出图片保存路径（可选，默认保存到当前目录）
-    max_episodes: 最大处理的episode数量（可选，默认处理全部）
+加载 LeRobot 格式数据集，提取 action 和 observation.state，按原始维度顺序
+分页绘制分布图，并输出为一个统一 PDF 文件。action 维度不会按左右臂或名称
+重排，也不会截断。
 
 使用示例：
-    # 基本使用
-    python plot_lerobot_distribution.py --repo_id lerobot/pusht
-    
-    # 指定本地root路径
-    python plot_lerobot_distribution.py --repo_id lerobot/pusht --root ./lerobot_data
-    
-    # 指定输出路径
-    python plot_lerobot_distribution.py --repo_id lerobot/pusht --output_dir ./output
-    
-    # 限制处理的episode数量（快速预览）
-    python plot_lerobot_distribution.py --dataset_path ./lerobot_data --max_episodes 10
-
-依赖要求：
-    - lerobot库（pip install lerobot）
-    - matplotlib, seaborn, numpy, pandas
-
-作者：标准数据处理流程
-日期：2024
+    python 0_plot_lerobot_distribution.py \
+        --repo_id lerobot/pusht \
+        --root ./lerobot_data \
+        --output_dir ./output \
+        --max_episodes 10
 """
 
 import argparse
+import json
+import warnings
 from pathlib import Path
-import numpy as np
-import pandas as pd
+
+import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-from tqdm import tqdm
 import torch
+from matplotlib.backends.backend_pdf import PdfPages
+from tqdm import tqdm
 
 # 设置matplotlib支持中文
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'SimHei', 'WenQuanYi Micro Hei']
-plt.rcParams['axes.unicode_minus'] = False
+_FONT_DIR = Path(__file__).resolve().parent
+_SC_FONT = _FONT_DIR / "fonts/NotoSansCJK-SC-Regular.otf"
+if _SC_FONT.exists():
+    fm.fontManager.addfont(str(_SC_FONT))
+plt.rcParams["font.sans-serif"] = ["Noto Sans CJK SC", "DejaVu Sans", "Arial", "SimHei", "WenQuanYi Micro Hei"]
+plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["pdf.fonttype"] = 42
+
+COLOR_NORMAL = "#5B9BD5"
+COLOR_ABNORMAL = "#CD5C5C"
+MAX_DIMS_PER_PAGE = 20
 
 try:
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 except ImportError:
     print("错误: 请先安装lerobot库: pip install lerobot")
     exit(1)
-
-import json
 
 
 def load_feature_names(dataset_path: Path, feature_key: str = 'action'):
@@ -318,133 +305,220 @@ def extract_data(dataset: LeRobotDataset, dataset_path: Path, max_episodes: int 
     return final_data, episode_lengths, feature_names, abnormal_episodes, total_episodes_processed
 
 
-def plot_violin_distribution(data: np.ndarray, feature_names: list, title: str, output_path: Path = None):
-    """绘制提琴图"""
-    if data is None or data.size == 0:
-        print(f"⚠️ 没有{title}数据可绘制")
-        return
-    
-    num_features = data.shape[1]
-    
-    # 如果特征太多，只绘制前20个
-    if num_features > 20:
-        print(f"⚠️ Too many features ({num_features}), only plotting first 20 features")
-        data = data[:, :20]
-        feature_names = feature_names[:20]
-        num_features = 20
-    
-    # 设置绘图风格
-    try:
-        plt.style.use('seaborn-v0_8-darkgrid')
-    except:
+def _set_plot_style():
+    """设置 PDF 报告的统一绘图风格。"""
+    for style in ("seaborn-v0_8-darkgrid", "seaborn-darkgrid", "default"):
         try:
-            plt.style.use('seaborn-darkgrid')
-        except:
-            plt.style.use('default')
-    sns.set_palette("husl")
-    
-    # 创建子图，每个特征一个子图，每个子图有自己的y轴范围
-    n_cols = min(4, num_features)  # 每行最多4个子图
-    n_rows = (num_features + n_cols - 1) // n_cols
-    
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 4, n_rows * 3))
-    fig.suptitle(f'{title} - Distribution Violin Plot', fontsize=16, fontweight='bold', y=0.995)
-    
-    # 确保axes是二维数组
-    if n_rows == 1:
-        axes = axes.reshape(1, -1)
-    if n_cols == 1:
+            plt.style.use(style)
+            break
+        except Exception:
+            continue
+    if _SC_FONT.exists():
+        fm.fontManager.addfont(str(_SC_FONT))
+    plt.rcParams["font.sans-serif"] = [
+        "Noto Sans CJK SC",
+        "DejaVu Sans",
+        "Arial",
+        "SimHei",
+        "WenQuanYi Micro Hei",
+    ]
+    plt.rcParams["axes.unicode_minus"] = False
+    plt.rcParams["pdf.fonttype"] = 42
+
+
+def _is_joint(name: str) -> bool:
+    return name.endswith("_joint")
+
+
+def _is_joint_abnormal(col: np.ndarray) -> bool:
+    """关节角数据是否存在超出 [-pi, pi] 的异常值。"""
+    return bool(np.any(np.abs(col) > np.pi))
+
+
+def _is_discrete(col: np.ndarray, max_unique: int = 5) -> bool:
+    """判断一列数据是否为离散值。"""
+    return len(np.unique(col)) <= max_unique
+
+
+def _plot_discrete(ax, col: np.ndarray, color: str):
+    """为离散数据绘制柱状占比图。"""
+    unique_vals, counts = np.unique(col, return_counts=True)
+    ratios = counts / len(col) * 100
+    bars = ax.bar([str(v) for v in unique_vals], ratios, color=color, edgecolor="white", width=0.5)
+    for bar, ratio in zip(bars, ratios):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 1,
+            f"{ratio:.1f}%",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+        )
+    ax.set_ylabel("%", fontsize=8)
+    ax.set_ylim(0, max(ratios) * 1.25 if len(ratios) else 1)
+
+
+def _plot_category_page(
+    pdf: PdfPages,
+    page_data: np.ndarray,
+    dim_names: list[str],
+    page_title: str,
+) -> list[tuple[str, float, float, bool]]:
+    """向 PDF 写入一页，维度顺序与 page_data 列顺序完全一致。"""
+    n = len(dim_names)
+    n_cols = min(5, n)
+    n_rows = (n + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 3.6, n_rows * 3.8))
+    fig.suptitle(page_title, fontsize=13, fontweight="bold", y=0.995)
+
+    if n == 1:
+        axes = np.array([[axes]])
+    elif n_rows == 1:
+        axes = np.atleast_2d(axes)
+    elif n_cols == 1:
         axes = axes.reshape(-1, 1)
-    
-    for i in range(num_features):
-        row = i // n_cols
-        col = i % n_cols
-        ax = axes[row, col]
-        
-        feature_data = data[:, i]
-        feature_name = feature_names[i] if i < len(feature_names) else f"Feature{i+1}"
-        
-        # 为每个特征创建单独的DataFrame
-        df = pd.DataFrame({'Value': feature_data})
-        
-        # 绘制单个特征的提琴图
-        sns.violinplot(data=df, y='Value', ax=ax, inner='box')
-        
-        # 设置标题和标签
-        ax.set_title(feature_name, fontsize=10, fontweight='bold')
-        ax.set_ylabel('Value', fontsize=9)
-        ax.set_xlabel('', fontsize=0)  # 移除x轴标签
-        
-        # 每个子图使用自己的y轴范围
-        data_min = feature_data.min()
-        data_max = feature_data.max()
-        data_range = data_max - data_min
-        margin = data_range * 0.1 if data_range > 0 else 0.1
-        ax.set_ylim(data_min - margin, data_max + margin)
-        
-        # 添加网格
+
+    ranges: list[tuple[str, float, float, bool]] = []
+
+    for i in range(n):
+        ax = axes[i // n_cols, i % n_cols]
+        col = page_data[:, i]
+        name = dim_names[i]
+        joint = _is_joint(name)
+        abnormal = joint and _is_joint_abnormal(col)
+        color = COLOR_ABNORMAL if abnormal else COLOR_NORMAL
+        discrete = _is_discrete(col)
+
+        d_min, d_max = float(col.min()), float(col.max())
+        ranges.append((name, d_min, d_max, joint))
+
+        if discrete:
+            _plot_discrete(ax, col, color)
+            unique_str = ", ".join(f"{v}" for v in np.unique(col))
+            subtitle = f"{name}\nvals: {{{unique_str}}}"
+        elif joint:
+            sns.violinplot(y=col, ax=ax, inner="box", color=color)
+            margin = (d_max - d_min) * 0.1 if d_max > d_min else 0.1
+            ax.set_ylim(d_min - margin, d_max + margin)
+            deg_min, deg_max = np.degrees(d_min), np.degrees(d_max)
+            subtitle = f"{name}\n[{d_min:.3f}, {d_max:.3f}] rad\n[{deg_min:.1f}, {deg_max:.1f}] deg"
+        else:
+            sns.violinplot(y=col, ax=ax, inner="box", color=color)
+            margin = (d_max - d_min) * 0.1 if d_max > d_min else 0.1
+            ax.set_ylim(d_min - margin, d_max + margin)
+            subtitle = f"{name}\n[{d_min:.3f}, {d_max:.3f}]"
+
+        title_color = COLOR_ABNORMAL if abnormal else "black"
+        ax.set_title(subtitle, fontsize=7, fontweight="bold", color=title_color)
+        ax.set_xlabel("")
         ax.grid(True, alpha=0.3)
-    
-    # 隐藏多余的子图
-    for i in range(num_features, n_rows * n_cols):
-        row = i // n_cols
-        col = i % n_cols
-        axes[row, col].axis('off')
-    
-    # 调整布局
-    plt.tight_layout(rect=[0, 0, 1, 0.98])
-    
-    # 保存或显示
-    if output_path:
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"✅ Plot saved to: {output_path}")
-    else:
-        plt.show()
-    
-    plt.close()
+
+    for i in range(n, n_rows * n_cols):
+        axes[i // n_cols, i % n_cols].axis("off")
+
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    pdf.savefig(fig, dpi=200)
+    plt.close(fig)
+    return ranges
 
 
-def plot_episode_length_distribution(episode_lengths: list, output_path: Path = None):
-    """绘制episode长度分布"""
-    if not episode_lengths:
-        print("⚠️ No episode length data to plot")
+def _print_ranges_table(header: str, ranges: list[tuple[str, float, float, bool]]):
+    """在 stdout 打印一页内各维度的范围。"""
+    if not ranges:
         return
-    
-    try:
-        plt.style.use('seaborn-v0_8-darkgrid')
-    except:
-        try:
-            plt.style.use('seaborn-darkgrid')
-        except:
-            plt.style.use('default')
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # 绘制提琴图
-    df = pd.DataFrame({'Episode Length': episode_lengths})
-    sns.violinplot(data=df, y='Episode Length', ax=ax)
-    
-    ax.set_title('Episode Length Distribution', fontsize=16, fontweight='bold', pad=20)
-    ax.set_ylabel('Frames', fontsize=12)
-    
-    plt.tight_layout()
-    
-    if output_path:
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"✅ Episode length distribution plot saved to: {output_path}")
+
+    name_w = max(len(r[0]) for r in ranges)
+    name_w = max(name_w, 3)
+    has_joints = any(r[3] for r in ranges)
+
+    print(f"\n{header}")
+    if has_joints:
+        print(
+            f"  {'dim':<{name_w}}  {'min(rad)':>12}  {'max(rad)':>12}"
+            f"  {'min(deg)':>10}  {'max(deg)':>10}  {'status':>6}"
+        )
     else:
-        plt.show()
-    
-    plt.close()
+        print(f"  {'dim':<{name_w}}  {'min':>12}  {'max':>12}")
+
+    for name, lo, hi, joint in ranges:
+        if joint:
+            deg_lo, deg_hi = np.degrees(lo), np.degrees(hi)
+            flag = " [!]" if (abs(lo) > np.pi or abs(hi) > np.pi) else "  ok"
+            print(f"  {name:<{name_w}}  {lo:>12.4f}  {hi:>12.4f}  {deg_lo:>10.1f}  {deg_hi:>10.1f}  {flag:>6}")
+        else:
+            print(f"  {name:<{name_w}}  {lo:>12.4f}  {hi:>12.4f}")
 
 
-def generate_feature_names(num_features: int, prefix: str = "Feature") -> list:
-    """生成特征名称列表"""
-    return [f"{prefix}{i+1}" for i in range(num_features)]
+def _feature_names_for_plot(names: list | None, num_dims: int, feature_key: str) -> list[str]:
+    """返回绘图名称；不改变原始维度顺序。"""
+    if names and len(names) == num_dims:
+        print(f"   - {feature_key} 使用 info.json 中的 {num_dims} 个维度名")
+        return [str(name) for name in names]
+    if names:
+        print(f"   ⚠️ {feature_key} 名称数量({len(names)})与维度数({num_dims})不匹配，使用 dim_N 名称")
+    else:
+        print(f"   - {feature_key} 未找到维度名，使用 dim_N 名称")
+    return [f"dim_{i}" for i in range(num_dims)]
+
+
+def create_pdf_report(
+    feature_data_dict: dict,
+    feature_names_dict: dict,
+    episode_lengths: list[int],
+    output_path: Path,
+    max_dims_per_page: int = MAX_DIMS_PER_PAGE,
+) -> bool:
+    """生成统一 PDF 报告。返回是否写入了有效内容。"""
+    _set_plot_style()
+    has_data = False
+
+    with warnings.catch_warnings(), PdfPages(output_path) as pdf:
+        warnings.simplefilter("ignore", UserWarning)
+
+        for feature_key, arr in feature_data_dict.items():
+            if arr is None or arr.size == 0 or arr.ndim != 2:
+                print(f"⚠️ 跳过 {feature_key}（无有效数据）")
+                continue
+
+            has_data = True
+            num_dims = arr.shape[1]
+            dim_names = _feature_names_for_plot(feature_names_dict.get(feature_key), num_dims, feature_key)
+            print(f"\n正在写入 {feature_key} 分布：{num_dims} 维，原始顺序分页")
+
+            for start in range(0, num_dims, max_dims_per_page):
+                end = min(start + max_dims_per_page, num_dims)
+                page_title = f"{feature_key} Distribution · dims {start}-{end - 1} / {num_dims}"
+                ranges = _plot_category_page(
+                    pdf,
+                    arr[:, start:end],
+                    dim_names[start:end],
+                    page_title,
+                )
+                _print_ranges_table(f"{feature_key} · dims {start}-{end - 1}", ranges)
+
+        if episode_lengths:
+            has_data = True
+            fig, ax = plt.subplots(figsize=(10, 5))
+            sns.violinplot(y=episode_lengths, ax=ax, inner="box")
+            ax.set_title("Episode Length Distribution", fontsize=14, fontweight="bold")
+            ax.set_ylabel("Frames")
+            ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            pdf.savefig(fig, dpi=200)
+            plt.close(fig)
+            ep_min, ep_max = min(episode_lengths), max(episode_lengths)
+            print(f"\nEpisode Length: min={ep_min}, max={ep_max}, count={len(episode_lengths)}")
+        else:
+            print("⚠️ 跳过 episode 长度分布图（无有效数据）")
+
+    if has_data:
+        print(f"\n✅ PDF saved: {output_path}")
+    return has_data
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='LeRobot数据集数据分布提琴图绘制工具',
+        description='LeRobot 数据集数据分布 PDF 报告工具',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     
@@ -453,11 +527,11 @@ def main():
     parser.add_argument('--root', type=str, default=None,
                        help='数据集根目录（可选，默认：~/.cache/huggingface/lerobot）')
     parser.add_argument('--output_dir', type=str, default=None,
-                       help='输出图片保存目录（默认：当前目录）')
+                       help='输出 PDF 保存目录（默认：当前目录）')
     parser.add_argument('--max_episodes', type=int, default=None,
                        help='最大处理的episode数量（默认：处理全部）')
     parser.add_argument('--prefix', type=str, default='distribution',
-                       help='输出文件名前缀（默认：distribution）')
+                       help='输出 PDF 文件名前缀（默认：distribution）')
     
     args = parser.parse_args()
     
@@ -492,84 +566,18 @@ def main():
     else:
         print("   - 未处理任何episode，无法统计异常")
 
-    # 绘制各特征分布
-    has_data = False
-    
-    for feature_key, data_array in feature_data_dict.items():
-        if data_array is None or data_array.size == 0 or len(data_array.shape) != 2:
-            print(f"⚠️ Skipping {feature_key} plot (no valid data)")
-            continue
-            
-        print(f"\n正在绘制 {feature_key} 分布...")
-        num_dims = data_array.shape[1]
-        names = feature_names_dict.get(feature_key)
-        
-        # 简化名称以便在图表中显示，并分组
-        if names and len(names) == num_dims:
-            left_indices = []
-            right_indices = []
-            left_names = []
-            right_names = []
-            
-            for idx, name in enumerate(names):
-                # 简化名称：提取关键部分
-                parts = name.split('.')
-                if len(parts) >= 3:
-                    # 取最后两部分
-                    simplified = '_'.join(parts[-2:])
-                else:
-                    simplified = name.replace('.', '_')
-                
-                # 根据名称判断是左还是右
-                if 'masterLeft' in name or 'Left' in name or 'pikaSensor_l' in name or 'pikaGripper_l' in name:
-                    left_indices.append(idx)
-                    left_names.append(simplified)
-                elif 'masterRight' in name or 'Right' in name or 'pikaSensor_r' in name or 'pikaGripper_r' in name:
-                    right_indices.append(idx)
-                    right_names.append(simplified)
-                else:
-                    # 如果无法判断，默认归为左侧（前14维通常是左侧）
-                    if idx < num_dims // 2:
-                        left_indices.append(idx)
-                        left_names.append(simplified)
-                    else:
-                        right_indices.append(idx)
-                        right_names.append(simplified)
-            
-            print(f"   - Using dimension names from info.json")
+    dataset_name = args.repo_id.replace("/", "_")
+    if args.root:
+        candidate = Path(args.root) / args.repo_id
+        if candidate.is_dir():
+            dataset_name = candidate.resolve().name
         else:
-            # 生成默认名称，按维度数平分
-            mid_point = num_dims // 2
-            left_indices = list(range(mid_point))
-            right_indices = list(range(mid_point, num_dims))
-            left_names = generate_feature_names(len(left_indices), "Left")
-            right_names = generate_feature_names(len(right_indices), "Right")
-            if names:
-                print(f"   ⚠️ 名称数量({len(names)})与维度数({num_dims})不匹配，使用默认名称")
-        
-        # 绘制左侧数据
-        clean_key = feature_key.replace('.', '_')
-        if left_indices:
-            left_data = data_array[:, left_indices]
-            left_output_path = output_dir / f"{args.prefix}_{clean_key}_left.png"
-            plot_violin_distribution(left_data, left_names, f"{feature_key} - Left Arm Distribution", left_output_path)
-            has_data = True
-        
-        # 绘制右侧数据
-        if right_indices:
-            right_data = data_array[:, right_indices]
-            right_output_path = output_dir / f"{args.prefix}_{clean_key}_right.png"
-            plot_violin_distribution(right_data, right_names, f"{feature_key} - Right Arm Distribution", right_output_path)
-            has_data = True
+            dataset_name = Path(args.root).resolve().name
 
-    # 绘制episode长度分布
-    if episode_lengths and len(episode_lengths) > 0:
-        length_output_path = output_dir / f"{args.prefix}_episode_lengths.png"
-        plot_episode_length_distribution(episode_lengths, length_output_path)
-        has_data = True
-    else:
-        print("⚠️ 跳过episode长度分布图（无有效数据）")
-    
+    output_path = output_dir / f"{args.prefix}_{dataset_name}_distribution.pdf"
+    print("\n正在生成 PDF 报告...")
+    has_data = create_pdf_report(feature_data_dict, feature_names_dict, episode_lengths, output_path)
+
     if has_data:
         print("\n✅ 所有图表绘制完成！")
     else:
