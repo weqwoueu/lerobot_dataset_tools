@@ -33,6 +33,7 @@ class FilteredDatasetCreator(BaseDatasetCreator):
         task_id: Optional[str] = None,
         push_to_hub: bool = True,
         local_output_dir: Optional[Path] = None,
+        temp_dir: Optional[Path] = None,
     ) -> bool:
         """Create a new LeRobotDataset from selected episodes of the original dataset.
 
@@ -43,6 +44,7 @@ class FilteredDatasetCreator(BaseDatasetCreator):
             task_id: Optional task ID for progress tracking
             push_to_hub: Whether to push the dataset to the Hub
             local_output_dir: Optional path to save the dataset locally
+            temp_dir: Optional directory to store temporary dataset files
         """
 
         selected_episodes = sorted(selected_episodes)
@@ -72,10 +74,18 @@ class FilteredDatasetCreator(BaseDatasetCreator):
         for new_idx, old_episode_idx in enumerate(selected_episodes):
             old_to_new_episode_index_map[old_episode_idx] = new_idx
 
-        with tempfile.TemporaryDirectory() as temp_dir:
+        temp_parent = Path(temp_dir) if temp_dir else None
+        local_output_path = Path(local_output_dir) if local_output_dir else None
+        if temp_parent is None and local_output_path is not None:
+            temp_parent = local_output_path.parent
+        if temp_parent is not None:
+            temp_parent.mkdir(parents=True, exist_ok=True)
+
+        with tempfile.TemporaryDirectory(dir=temp_parent) as created_temp_dir:
             # Create a temp directory for the new dataset
-            temp_root = Path(temp_dir) / new_repo_id.replace("/", "_")
+            temp_root = Path(created_temp_dir) / new_repo_id.replace("/", "_")
             temp_root.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Using temporary dataset directory: {temp_root}")
 
             old_root = filtered_dataset.root
             filtered_dataset.root = temp_root
@@ -141,13 +151,12 @@ class FilteredDatasetCreator(BaseDatasetCreator):
                     robot_type=filtered_dataset.meta.robot_type or "unknown",
                 )
             
-            if local_output_dir:
-                local_output_path = Path(local_output_dir)
+            if local_output_path:
                 update_progress(task_id, 0.9, f"Saving dataset locally to {local_output_path}...")
                 if local_output_path.exists():
                     logger.warning(f"Removing existing output directory: {local_output_path}")
                     shutil.rmtree(local_output_path)
-                shutil.copytree(temp_root, local_output_path)
+                shutil.move(str(temp_root), str(local_output_path))
 
         # Cleanup cache if needed
         if push_to_hub:

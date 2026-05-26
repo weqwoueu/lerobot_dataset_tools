@@ -59,9 +59,39 @@ def parse_episode_list(episodes_arg: str) -> Set[int]:
     if not episodes_arg:
         return episodes_to_delete
 
+    def parse_inline_list(value: str) -> Set[int]:
+        parsed = set()
+        parts = value.split(',')
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            if '-' in part:
+                # 支持范围，如 10-20
+                try:
+                    start, end = map(int, part.split('-'))
+                    parsed.update(range(start, end + 1))
+                except ValueError:
+                    logger.warning(f"无法解析范围: {part}")
+            elif part.isdigit():
+                parsed.add(int(part))
+            else:
+                logger.warning(f"忽略无效的 episode ID: {part}")
+        return parsed
+
+    # 明显是直接列表/范围时先解析，避免超长逗号列表被 Path.exists() 当文件名 stat。
+    if ',' in episodes_arg or episodes_arg.replace('-', '').isdigit():
+        return parse_inline_list(episodes_arg)
+
     # 尝试作为文件路径读取
     file_path = Path(episodes_arg)
-    if file_path.exists() and file_path.is_file():
+    try:
+        is_episode_file = file_path.exists() and file_path.is_file()
+    except OSError as e:
+        logger.warning(f"无法将参数作为文件路径检查 ({e})，尝试作为直接列表解析")
+        is_episode_file = False
+
+    if is_episode_file:
         try:
             with open(file_path, 'r') as f:
                 if file_path.suffix == '.json':
@@ -84,24 +114,7 @@ def parse_episode_list(episodes_arg: str) -> Set[int]:
             logger.warning(f"无法将参数作为文件读取 ({e})，尝试作为直接列表解析")
 
     # 尝试作为逗号分隔的字符串解析
-    parts = episodes_arg.split(',')
-    for part in parts:
-        part = part.strip()
-        if not part:
-            continue
-        if '-' in part:
-            # 支持范围，如 10-20
-            try:
-                start, end = map(int, part.split('-'))
-                episodes_to_delete.update(range(start, end + 1))
-            except ValueError:
-                logger.warning(f"无法解析范围: {part}")
-        elif part.isdigit():
-            episodes_to_delete.add(int(part))
-        else:
-            logger.warning(f"忽略无效的 episode ID: {part}")
-            
-    return episodes_to_delete
+    return parse_inline_list(episodes_arg)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -119,6 +132,8 @@ def main():
                        help='生成的清洗后数据集存放目录')
     parser.add_argument('--new_repo_id', type=str, default=None,
                        help='新数据集的 Repo ID (默认为 {repo_id}_filtered)')
+    parser.add_argument('--temp_dir', type=str, default=None,
+                       help='临时文件目录 (默认使用 output_dir 的父目录，避免占用 /tmp)')
     
     args = parser.parse_args()
     
@@ -170,7 +185,8 @@ def main():
         new_repo_id=new_repo_id,
         selected_episodes=episodes_to_keep,
         push_to_hub=False,
-        local_output_dir=output_dir
+        local_output_dir=output_dir,
+        temp_dir=Path(args.temp_dir) if args.temp_dir else None,
     )
     
     if success:

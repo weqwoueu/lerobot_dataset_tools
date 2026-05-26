@@ -134,8 +134,8 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     # 查出245和474数据集缺少数据，到https://io-ai.tech/lerobot上加载数据集，然后删除掉缺失的episode，再导出到本地即可
 
     python 5_check_dataset.py \
-        my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t \
-        --root /home/standard/workspace/test/kai0/data
+        dagger/piper_fold_tshirt_task_a_aligned_recodec \
+        --root /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec
 ```
 
 # 6. darwin02数据集，将首帧的六维力传感器的force部分作为offset，修正episode中其后的每一帧

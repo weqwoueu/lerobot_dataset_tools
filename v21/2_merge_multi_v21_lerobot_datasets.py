@@ -30,8 +30,10 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 # new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt"
 # dataset_ids = ["/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_t"]
 # new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"
-dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged", "/home/standard/workspace/test/kai0/data/Task_A/dagger", "/home/standard/workspace/test/kai0/data/Task_A/dagger_t", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"]
-new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t"
+# dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged", "/home/standard/workspace/test/kai0/data/Task_A/dagger", "/home/standard/workspace/test/kai0/data/Task_A/dagger_t", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"]
+# new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t"
+dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged_delete", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_delete"]
+new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_std_dagger_b"
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t
 # /home/standard/workspace/test/kai0/data/Task_A/dagger
