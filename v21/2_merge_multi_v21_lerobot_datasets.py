@@ -32,8 +32,11 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 # new_repo_id = "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"
 # dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged", "/home/standard/workspace/test/kai0/data/Task_A/dagger", "/home/standard/workspace/test/kai0/data/Task_A/dagger_t", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_b_t"]
 # new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_kai0_dagger_b_t_std_dagger_b_t"
-dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged_delete", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_delete"]
-new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_std_dagger_b"
+# dataset_ids = ["/home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged_delete", "/home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_delete"]
+# new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_std_dagger_b"
+dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0526", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0527", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0528", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0601", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0602", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0603"]
+new_repo_id = "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_0526_0603"
+
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t
 # /home/standard/workspace/test/kai0/data/Task_A/dagger

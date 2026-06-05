@@ -162,6 +162,18 @@ def parse_args() -> argparse.Namespace:
         help="输出视频编码器。默认 h264_nvenc；传 source 表示沿用源视频编码。",
     )
     parser.add_argument(
+        "--gop",
+        type=int,
+        default=2,
+        help="输出视频 GOP/关键帧间隔。默认 2，适合训练随机读取 mp4 帧。",
+    )
+    parser.add_argument(
+        "--b_frames",
+        type=int,
+        default=0,
+        help="输出视频 B 帧数量。默认 0，适合训练随机读取 mp4 帧。",
+    )
+    parser.add_argument(
         "--nvenc_preset",
         default="p4",
         help="使用 h264_nvenc/hevc_nvenc 时的 preset。",
@@ -452,13 +464,13 @@ def output_pix_fmt(params: VideoParams, codec: str) -> str:
     return params.pix_fmt
 
 
-def output_gop(params: VideoParams, codec: str) -> int:
-    return max(1, int(params.gop))
+def output_gop(params: VideoParams, args: argparse.Namespace) -> int:
+    return max(1, int(getattr(args, "gop", params.gop)))
 
 
-def output_b_frames(params: VideoParams) -> int:
-    gop = max(1, int(params.gop))
-    b_frames = max(0, int(params.b_frames))
+def output_b_frames(params: VideoParams, args: argparse.Namespace, gop: int | None = None) -> int:
+    gop = max(1, int(gop if gop is not None else output_gop(params, args)))
+    b_frames = max(0, int(getattr(args, "b_frames", params.b_frames)))
     if gop <= 1:
         return 0
     return min(b_frames, max(0, gop - 2))
@@ -466,6 +478,7 @@ def output_b_frames(params: VideoParams) -> int:
 
 def ffmpeg_codec_args(params: VideoParams, args: argparse.Namespace) -> list[str]:
     codec = output_codec_name(params, args)
+    b_frame_args = ["-bf", str(output_b_frames(params, args))]
     if codec in {"h264_nvenc", "hevc_nvenc"}:
         return [
             "-c:v",
@@ -476,8 +489,7 @@ def ffmpeg_codec_args(params: VideoParams, args: argparse.Namespace) -> list[str
             "vbr",
             "-cq",
             str(args.nvenc_cq),
-            "-bf",
-            str(output_b_frames(params)),
+            *b_frame_args,
         ]
     if codec == "av1":
         return [
@@ -493,11 +505,11 @@ def ffmpeg_codec_args(params: VideoParams, args: argparse.Namespace) -> list[str
             "1",
         ]
     if codec == "mp4v":
-        return ["-c:v", "mpeg4", "-vtag", "mp4v", "-q:v", str(args.mp4v_qscale)]
+        return ["-c:v", "mpeg4", "-vtag", "mp4v", "-q:v", str(args.mp4v_qscale), *b_frame_args]
     if codec in {"h264", "avc1"}:
-        return ["-c:v", "libx264"]
+        return ["-c:v", "libx264", *b_frame_args]
     if codec in {"hevc", "h265"}:
-        return ["-c:v", "libx265"]
+        return ["-c:v", "libx265", *b_frame_args]
     logger.warning("未知源视频编码 %s，将尝试使用 ffmpeg 编码器名称直接重编码。", codec)
     return ["-c:v", codec]
 
@@ -559,13 +571,14 @@ def filter_video(
 
     vf = f"select='{select_expression_from_ranges(keep_ranges)}',setpts=N/FRAME_RATE/TB"
     codec = output_codec_name(params, args)
-    gop = output_gop(params, codec)
+    gop = output_gop(params, args)
+    b_frames = output_b_frames(params, args, gop)
     logger.info(
         "视频编码: %s -> %s, gop=%d, b_frames=%d, %s",
         params.codec_name,
         codec,
         gop,
-        output_b_frames(params),
+        b_frames,
         src_video_path,
     )
     cmd = [
@@ -906,6 +919,8 @@ def global_stats(plans: list[EpisodePlan], args: argparse.Namespace) -> dict[str
             "trim_start_seconds": args.trim_start_seconds,
             "trim_end_seconds": args.trim_end_seconds,
             "video_codec": getattr(args, "video_codec", None),
+            "gop": getattr(args, "gop", None),
+            "b_frames": getattr(args, "b_frames", None),
             "workers": getattr(args, "workers", None),
             "nvenc_preset": getattr(args, "nvenc_preset", None),
             "nvenc_cq": getattr(args, "nvenc_cq", None),
@@ -974,6 +989,10 @@ def process_dataset(args: argparse.Namespace) -> None:
         raise ValueError("--min_idle_len/--min_nonidle_len 必须大于 0，--filter_last_n 不能为负数")
     if args.workers <= 0:
         raise ValueError("--workers 必须大于 0")
+    if args.gop <= 0:
+        raise ValueError("--gop 必须大于 0")
+    if args.b_frames < 0:
+        raise ValueError("--b_frames 必须大于等于 0")
 
     info = read_json(dataset_dir / "meta" / "info.json")
     fps = int(info["fps"])
