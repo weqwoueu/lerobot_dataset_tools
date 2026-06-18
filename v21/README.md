@@ -325,3 +325,15 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         --camera observation.images.cam_high
         # --max_episodes 5 \
     ```
+
+# 20. 统计 LeRobot v2.1 数据集中夹爪相邻帧 delta。
+脚本只读取数据集 parquet，不修改原始数据。默认检查 0 基下标 6 和 13：
+left_gripper_pos / right_gripper_pos，并同时统计 observation.state 和 action。
+    ```shell
+    python 20_check_gripper_delta.py \
+        --repo_id piperx/piperx_grab_bigbox_0526_0609_nonidle \
+        --root /home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_0526_0609_nonidle \
+        --output_dir ./output \
+        --threshold 0.03 \
+        --max_episodes 3
+    ```
