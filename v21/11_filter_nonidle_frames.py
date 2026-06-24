@@ -120,7 +120,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--filter_last_n",
         type=int,
-        default=10,
+        default=0,
         help="每个保留片段末尾再裁掉多少帧。",
     )
     parser.add_argument(

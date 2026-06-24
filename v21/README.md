@@ -231,6 +231,10 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         --dataset_dir /home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_0526_0603 \
         --workers 4 \
         --trim_start_seconds 0.0
+
+    python 11_filter_nonidle_frames.py \
+        --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624 \
+        --workers 8
     ```
 
 # 12. kai0 的临时工具。用robocoin采的数据集，key name等参数和kai0的数据集不一致，用该工具对齐，除了视频编码方式不对齐。

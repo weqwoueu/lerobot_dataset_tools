@@ -7,7 +7,7 @@ from typing import List
 
 from datasets import Value, concatenate_datasets
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.datasets.utils import get_episode_data_index
+from lerobot.datasets.utils import get_episode_data_index, get_hf_features_from_features
 from lerobot.constants import HF_LEROBOT_HOME
 
 from .dataset_creator import DatasetCreator
@@ -231,7 +231,7 @@ class MergedDatasetCreator(DatasetCreator):
                     batched=False,
                     load_from_cache_file=False,
                 )
-                episode_hf_data = self._cast_scalar_features_for_merge(episode_hf_data)
+                episode_hf_data = self._cast_features_for_merge(episode_hf_data, dataset.meta.info["features"])
                 all_hf_datasets.append(episode_hf_data)
 
                 merged_episode_idx += 1
@@ -241,12 +241,32 @@ class MergedDatasetCreator(DatasetCreator):
         return all_episodes, all_episode_stats, all_tasks, merged_hf_dataset
 
     @staticmethod
-    def _cast_scalar_features_for_merge(hf_dataset):
-        """Normalize scalar feature dtypes before concatenating source datasets."""
+    def _cast_features_for_merge(hf_dataset, dataset_features: dict):
+        """Normalize HF feature dtypes/shapes before concatenating source datasets."""
+        expected_features = get_hf_features_from_features(
+            MergedDatasetCreator._normalize_feature_shapes(dataset_features)
+        )
+
+        for feature_key, expected_feature in expected_features.items():
+            if feature_key in hf_dataset.features and hf_dataset.features[feature_key] != expected_feature:
+                hf_dataset = hf_dataset.cast_column(feature_key, expected_feature)
+
         for feature_key, dtype in DATASET_SCALAR_FEATURE_DTYPES.items():
-            if feature_key in hf_dataset.features:
-                hf_dataset = hf_dataset.cast_column(feature_key, Value(dtype))
+            expected_feature = Value(dtype)
+            if feature_key in hf_dataset.features and hf_dataset.features[feature_key] != expected_feature:
+                hf_dataset = hf_dataset.cast_column(feature_key, expected_feature)
         return hf_dataset
+
+    @staticmethod
+    def _normalize_feature_shapes(dataset_features: dict) -> dict:
+        """Convert JSON-loaded feature shapes to tuples for LeRobot HF feature conversion."""
+        normalized_features = {}
+        for key, feature in dataset_features.items():
+            normalized_feature = feature.copy()
+            if "shape" in normalized_feature:
+                normalized_feature["shape"] = tuple(normalized_feature["shape"])
+            normalized_features[key] = normalized_feature
+        return normalized_features
 
     def _copy_merged_videos(self, datasets: List[LeRobotDataset], temp_root: Path, chunks_size: int) -> None:
         """Copy video files from all source datasets to the merged dataset.
