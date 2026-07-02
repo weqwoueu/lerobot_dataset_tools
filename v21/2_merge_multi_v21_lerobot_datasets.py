@@ -40,8 +40,10 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 # new_repo_id = "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609"
 # dataset_ids = ["/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_0526_0603_nonidle_delete", "/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
 # new_repo_id = "/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_0526_0609_nonidle"
-dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0617", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0618", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0622", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0623", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0624", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
-new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624"
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0617", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0618", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0622", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0623", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0624", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624"
+dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged_nonidle", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
+new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0609_nonidle"
 
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t

@@ -341,3 +341,18 @@ left_gripper_pos / right_gripper_pos，并同时统计 observation.state 和 act
         --threshold 0.03 \
         --max_episodes 3
     ```
+
+# 21. 读取数据集，删除 length < min_length 的 episode，并生成 <dataset>_min<min_length> 新目录，不修改原数据集。dry-run 则是只测试，不生成新数据集。
+    ```shell
+    python 21_remove_short_episodes.py --dry_run
+    python 21_remove_short_episodes.py \
+        --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624_nonidle
+    ```
+
+# 22. 为混合数据集（全流程+dagger）的 meta/episodes.jsonl 增加 "terminated": false/true，全流程数据为true，dagger数据为false
+    ```shell
+    python 22_label_episode_terminated.py --dry_run
+    python 22_label_episode_terminated.py \
+        --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624_nonidle_min30 \
+        --terminal_start_episode 906
+    ```
