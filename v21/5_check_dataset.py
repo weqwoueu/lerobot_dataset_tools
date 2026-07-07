@@ -47,6 +47,31 @@ def sort_task_indices(values) -> list:
     return sorted(values, key=format_task_index)
 
 
+def import_lerobot_dataset_classes():
+    """Import LeRobot dataset classes across old and new package layouts."""
+    try:
+        from lerobot.datasets.lerobot_dataset import (
+            LeRobotDataset,
+            LeRobotDatasetMetadata,
+        )
+
+        return LeRobotDataset, LeRobotDatasetMetadata, "lerobot.datasets"
+    except ImportError as new_exc:
+        try:
+            from lerobot.common.datasets.lerobot_dataset import (
+                LeRobotDataset,
+                LeRobotDatasetMetadata,
+            )
+
+            return LeRobotDataset, LeRobotDatasetMetadata, "lerobot.common.datasets"
+        except ImportError as old_exc:
+            raise ImportError(
+                "No compatible LeRobot dataset module found. Tried "
+                "lerobot.datasets.lerobot_dataset and "
+                "lerobot.common.datasets.lerobot_dataset."
+            ) from old_exc
+
+
 def check_dataset(repo_id: str, root: Path | None = None):
     lerobot_home = root or get_default_lerobot_home()
     dataset_dir = lerobot_home / repo_id
@@ -405,39 +430,31 @@ def check_dataset(repo_id: str, root: Path | None = None):
     print("─" * 70)
     print("[6/6] 尝试用 LeRobot 加载数据集 ...")
     try:
-        from lerobot.common.datasets.lerobot_dataset import LeRobotDataset, LeRobotDatasetMetadata
-    except ImportError:
+        LeRobotDataset, LeRobotDatasetMetadata, lerobot_layout = (
+            import_lerobot_dataset_classes()
+        )
+    except ImportError as exc:
         print("  ⚠️  无法导入 lerobot，跳过加载测试")
-        print("  请确保 lerobot 已安装: pip install lerobot")
+        print(f"  原因: {exc}")
+        print("  请确保 lerobot 已安装，并且版本提供 LeRobotDataset。")
         return True
 
-    load_kwargs = {"local_files_only": True}
-    if root is not None:
-        load_kwargs["root"] = root
-    print(f"  加载参数: {load_kwargs}")
+    print(f"  使用 LeRobot 模块: {lerobot_layout}")
+    print(f"  本地数据集 root: {dataset_dir}")
 
     try:
         print(f"\n  加载 LeRobotDatasetMetadata('{repo_id}') ...")
-        # 尝试直接构造本地路径
-        local_dir = root / repo_id if root else get_default_lerobot_home() / repo_id
-        if local_dir.exists():
-            print(f"  尝试直接从本地路径加载: {local_dir}")
-            # LeRobotDatasetMetadata 接受本地绝对路径作为 repo_id
-            meta = LeRobotDatasetMetadata(str(local_dir))
-        else:
-            meta = LeRobotDatasetMetadata(repo_id, **load_kwargs)
-            
+        meta = LeRobotDatasetMetadata(repo_id, root=dataset_dir)
         print(f"  ✅ Metadata 加载成功")
         print(f"    fps    : {meta.fps}")
         print(f"    tasks  : {meta.tasks}")
         print(f"    features: {list(meta.features.keys()) if hasattr(meta, 'features') else 'N/A'}")
     except TypeError as e:
-        print(f"  ⚠️  LeRobotDatasetMetadata 不支持 local_files_only 参数，尝试不带该参数...")
+        print(f"  ⚠️  LeRobotDatasetMetadata 不支持 root 参数，尝试用本地路径作为 repo_id...")
         print(f"    ({type(e).__name__}: {e})")
-        load_kwargs.pop("local_files_only", None)
         try:
-            meta = LeRobotDatasetMetadata(repo_id, **load_kwargs)
-            print(f"  ✅ Metadata 加载成功 (无 local_files_only)")
+            meta = LeRobotDatasetMetadata(str(dataset_dir))
+            print(f"  ✅ Metadata 加载成功 (本地路径 repo_id)")
             print(f"    fps    : {meta.fps}")
             print(f"    tasks  : {meta.tasks}")
         except Exception as e2:
@@ -461,14 +478,7 @@ def check_dataset(repo_id: str, root: Path | None = None):
 
     try:
         print(f"\n  加载 LeRobotDataset('{repo_id}') ...")
-        local_dir = root / repo_id if root else get_default_lerobot_home() / repo_id
-        if local_dir.exists():
-            print(f"  尝试直接从本地路径加载: {local_dir}")
-            # LeRobotDataset 同样接受本地绝对路径
-            dataset = LeRobotDataset(str(local_dir))
-        else:
-            dataset = LeRobotDataset(repo_id, **load_kwargs)
-            
+        dataset = LeRobotDataset(repo_id, root=dataset_dir)
         print(f"  ✅ Dataset 加载成功!")
         print(f"    长度: {len(dataset)}")
         print(f"    episodes: {dataset.episodes}")

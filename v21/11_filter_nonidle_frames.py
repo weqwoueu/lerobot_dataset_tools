@@ -42,6 +42,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+STATE_KEY_CANDIDATES = ("observation.state", "state")
+ACTION_KEY_CANDIDATES = ("action", "actions")
+NVENC_MIN_SIDE_FOR_SCRIPT = 256
+WARNED_NVENC_FALLBACKS: set[tuple[str, int, int, str]] = set()
+
 
 @dataclass(frozen=True)
 class VideoParams:
@@ -107,7 +112,27 @@ def parse_args() -> argparse.Namespace:
         "--signal",
         choices=("both", "state", "action"),
         default="both",
-        help="用于判断静止的信号。both 表示 concat(observation.state, action)。",
+        help="用于判断静止的信号。both 表示 concat(state_key, action_key)。",
+    )
+    parser.add_argument(
+        "--state_key",
+        default=None,
+        help="状态列名。默认自动匹配 observation.state 或 state；用于 --signal state/both。",
+    )
+    parser.add_argument(
+        "--action_key",
+        default=None,
+        help="动作列名。默认自动匹配 action 或 actions；用于 --signal action/both。",
+    )
+    parser.add_argument(
+        "--output_state_key",
+        default=None,
+        help="输出数据集中的状态列名。默认沿用解析到的输入状态列名。",
+    )
+    parser.add_argument(
+        "--output_action_key",
+        default=None,
+        help="输出数据集中的动作列名。默认沿用解析到的输入动作列名。",
     )
     parser.add_argument("--eps", type=float, default=1e-3, help="静止判断阈值。")
     parser.add_argument("--min_idle_len", type=int, default=7, help="连续静止段至少多少帧才删除。")
@@ -330,6 +355,55 @@ def recompute_non_visual_stats(
     return stats
 
 
+def duplicate_items(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for item in items:
+        if item in seen and item not in duplicates:
+            duplicates.append(item)
+        seen.add(item)
+    return duplicates
+
+
+def rename_dataframe_columns(df: pd.DataFrame, rename_map: dict[str, str]) -> pd.DataFrame:
+    if not rename_map:
+        return df
+    new_columns = [rename_map.get(str(column), str(column)) for column in df.columns]
+    duplicates = duplicate_items(new_columns)
+    if duplicates:
+        raise ValueError(f"输出列名重名: {', '.join(duplicates)}")
+    return df.rename(columns=rename_map)
+
+
+def rename_feature_keys(info: dict[str, Any], rename_map: dict[str, str]) -> dict[str, Any]:
+    updated = dict(info)
+    features = updated.get("features", {})
+    if not rename_map or not features:
+        updated["features"] = dict(features)
+        return updated
+
+    renamed_features: dict[str, Any] = {}
+    for key, feature in features.items():
+        new_key = rename_map.get(key, key)
+        if new_key in renamed_features:
+            raise ValueError(f"输出 features key 重名: {new_key}")
+        renamed_features[new_key] = feature
+    updated["features"] = renamed_features
+    return updated
+
+
+def rename_stats_keys(stats: dict[str, Any] | None, rename_map: dict[str, str]) -> dict[str, Any]:
+    if not stats:
+        return {}
+    if not rename_map:
+        return dict(stats)
+
+    renamed_stats: dict[str, Any] = {}
+    for key, value in stats.items():
+        renamed_stats[rename_map.get(key, key)] = value
+    return renamed_stats
+
+
 def ensure_video_tools() -> None:
     missing = [name for name in ("ffmpeg", "ffprobe") if shutil.which(name) is None]
     if missing:
@@ -434,7 +508,7 @@ def probe_video_params(video_path: Path) -> VideoParams:
     key_ts = probe_keyframe_timestamps(video_path)
     gop = 1
     if len(key_ts) >= 2 and fps > 0:
-        gaps = [b - a for a, b in zip(key_ts, key_ts[1:]) if b > a]
+        gaps = [b - a for a, b in zip(key_ts, key_ts[1:], strict=False) if b > a]
         if gaps:
             gop = max(1, int(round(float(np.median(gaps)) * fps)))
     return VideoParams(
@@ -450,10 +524,35 @@ def probe_video_params(video_path: Path) -> VideoParams:
     )
 
 
+def nvenc_cpu_fallback_codec(codec: str) -> str | None:
+    if codec == "h264_nvenc":
+        return "h264"
+    if codec == "hevc_nvenc":
+        return "hevc"
+    return None
+
+
 def output_codec_name(params: VideoParams, args: argparse.Namespace) -> str:
     if args.video_codec == "source":
-        return params.codec_name
-    return str(args.video_codec).strip()
+        requested_codec = params.codec_name
+    else:
+        requested_codec = str(args.video_codec).strip()
+
+    fallback_codec = nvenc_cpu_fallback_codec(requested_codec)
+    if fallback_codec and (params.width < NVENC_MIN_SIDE_FOR_SCRIPT or params.height < NVENC_MIN_SIDE_FOR_SCRIPT):
+        warning_key = (requested_codec, params.width, params.height, fallback_codec)
+        if warning_key not in WARNED_NVENC_FALLBACKS:
+            WARNED_NVENC_FALLBACKS.add(warning_key)
+            logger.warning(
+                "视频尺寸 %dx%d 小于 NVENC 稳定编码阈值 %d，将 %s 自动降级为 %s 以保持原分辨率",
+                params.width,
+                params.height,
+                NVENC_MIN_SIDE_FOR_SCRIPT,
+                requested_codec,
+                fallback_codec,
+            )
+        return fallback_codec
+    return requested_codec
 
 
 def output_pix_fmt(params: VideoParams, codec: str) -> str:
@@ -682,19 +781,77 @@ def offset_ranges(
     return keep_indices, shifted_ranges
 
 
-def build_signal(df: pd.DataFrame, signal: str) -> np.ndarray:
+def format_column_names(columns: Any) -> str:
+    return ", ".join(str(column) for column in columns)
+
+
+def resolve_signal_column(
+    columns: Any,
+    configured_key: str | None,
+    candidates: tuple[str, ...],
+    label: str,
+) -> str:
+    if configured_key:
+        if configured_key in columns:
+            return configured_key
+        raise KeyError(
+            f"parquet 缺少指定的 {label} 列: {configured_key}; "
+            f"实际列: {format_column_names(columns)}"
+        )
+
+    for candidate in candidates:
+        if candidate in columns:
+            return candidate
+    raise KeyError(
+        f"parquet 缺少 {label} 列; "
+        f"已尝试: {', '.join(candidates)}; "
+        f"实际列: {format_column_names(columns)}"
+    )
+
+
+def remember_resolved_signal_key(args: argparse.Namespace, attr: str, key: str) -> None:
+    resolved_attr = f"resolved_{attr}"
+    previous = getattr(args, resolved_attr, None)
+    if previous is None:
+        setattr(args, resolved_attr, key)
+        return
+    if previous != key:
+        raise ValueError(f"不同 episode 解析到不一致的 {attr}: {previous} != {key}")
+
+
+def resolve_output_signal_keys(args: argparse.Namespace) -> dict[str, str]:
+    rename_map: dict[str, str] = {}
+    for attr in ("state_key", "action_key"):
+        input_key = getattr(args, f"resolved_{attr}", None)
+        output_key = getattr(args, f"output_{attr}", None)
+        if output_key and input_key is None:
+            raise ValueError(f"--output_{attr} 需要先解析出输入 {attr}；请确认 --signal 和 --{attr} 配置")
+        resolved_output_key = output_key or input_key
+        setattr(args, f"resolved_output_{attr}", resolved_output_key)
+        if input_key and resolved_output_key and input_key != resolved_output_key:
+            rename_map[input_key] = resolved_output_key
+    return rename_map
+
+
+def build_signal(
+    df: pd.DataFrame,
+    signal: str,
+    state_key: str | None = None,
+    action_key: str | None = None,
+) -> tuple[np.ndarray, dict[str, str]]:
     parts = []
+    resolved_keys: dict[str, str] = {}
     if signal in {"both", "state"}:
-        if "observation.state" not in df.columns:
-            raise KeyError("parquet 缺少 observation.state 列")
-        parts.append(numeric_array_from_series(df["observation.state"]))
+        resolved_state_key = resolve_signal_column(df.columns, state_key, STATE_KEY_CANDIDATES, "state")
+        resolved_keys["state_key"] = resolved_state_key
+        parts.append(numeric_array_from_series(df[resolved_state_key]))
     if signal in {"both", "action"}:
-        if "action" not in df.columns:
-            raise KeyError("parquet 缺少 action 列")
-        parts.append(numeric_array_from_series(df["action"]))
+        resolved_action_key = resolve_signal_column(df.columns, action_key, ACTION_KEY_CANDIDATES, "action")
+        resolved_keys["action_key"] = resolved_action_key
+        parts.append(numeric_array_from_series(df[resolved_action_key]))
     if len(parts) == 1:
-        return np.asarray(parts[0], dtype=np.float64)
-    return np.concatenate([np.asarray(item, dtype=np.float64) for item in parts], axis=1)
+        return np.asarray(parts[0], dtype=np.float64), resolved_keys
+    return np.concatenate([np.asarray(item, dtype=np.float64) for item in parts], axis=1), resolved_keys
 
 
 def validate_dataset_dir(dataset_dir: Path) -> None:
@@ -762,7 +919,14 @@ def build_plans(
         keep_ranges: list[tuple[int, int]] = []
         if frames_after_time_trim > 0:
             time_trimmed_df = df.iloc[time_start:time_end]
-            signal = build_signal(time_trimmed_df, args.signal)
+            signal, resolved_keys = build_signal(
+                time_trimmed_df,
+                args.signal,
+                state_key=args.state_key,
+                action_key=args.action_key,
+            )
+            for attr, key in resolved_keys.items():
+                remember_resolved_signal_key(args, attr, key)
             _local_keep_indices, local_keep_ranges = compute_keep_indices_and_ranges(
                 signal,
                 eps=args.eps,
@@ -835,11 +999,17 @@ def validate_video_files(plans: list[EpisodePlan], include_videos: bool) -> None
         raise FileNotFoundError(f"发现缺失视频:\n{preview}{more}")
 
 
-def write_filtered_parquet(plan: EpisodePlan, global_start_index: int, fps: int) -> pd.DataFrame:
+def write_filtered_parquet(
+    plan: EpisodePlan,
+    global_start_index: int,
+    fps: int,
+    column_rename_map: dict[str, str],
+) -> pd.DataFrame:
     if plan.dst_parquet_path is None or plan.dst_episode_index is None:
         raise ValueError("跳过的 episode 不应写 parquet")
     df = pd.read_parquet(plan.src_parquet_path)
     filtered = df.iloc[plan.keep_indices].copy()
+    filtered = rename_dataframe_columns(filtered, column_rename_map)
     new_len = len(filtered)
     filtered["frame_index"] = np.arange(new_len, dtype=np.int64)
     filtered["timestamp"] = (np.arange(new_len, dtype=np.float32) / fps).round(5)
@@ -910,6 +1080,14 @@ def global_stats(plans: list[EpisodePlan], args: argparse.Namespace) -> dict[str
     return {
         "parameters": {
             "signal": args.signal,
+            "state_key": getattr(args, "state_key", None),
+            "action_key": getattr(args, "action_key", None),
+            "output_state_key": getattr(args, "output_state_key", None),
+            "output_action_key": getattr(args, "output_action_key", None),
+            "resolved_state_key": getattr(args, "resolved_state_key", None),
+            "resolved_action_key": getattr(args, "resolved_action_key", None),
+            "resolved_output_state_key": getattr(args, "resolved_output_state_key", None),
+            "resolved_output_action_key": getattr(args, "resolved_output_action_key", None),
             "eps": args.eps,
             "min_idle_len": args.min_idle_len,
             "min_nonidle_len": args.min_nonidle_len,
@@ -1017,6 +1195,11 @@ def process_dataset(args: argparse.Namespace) -> None:
     )
     validate_video_files(plans, include_videos)
     log_summary(plans, output_dir)
+    column_rename_map = resolve_output_signal_keys(args)
+    output_info = update_video_features_for_output_codec(
+        rename_feature_keys(dict(info), column_rename_map),
+        args.video_codec,
+    )
 
     if args.dry_run:
         for plan in plans[:20]:
@@ -1054,7 +1237,7 @@ def process_dataset(args: argparse.Namespace) -> None:
         if plan.dst_episode_index is None:
             raise ValueError("保留 episode 缺少目标 episode_index")
 
-        filtered_df = write_filtered_parquet(plan, global_start_index, fps)
+        filtered_df = write_filtered_parquet(plan, global_start_index, fps, column_rename_map)
 
         old_episode = episodes_by_index[plan.src_episode_index]
         new_episode = dict(old_episode)
@@ -1062,8 +1245,8 @@ def process_dataset(args: argparse.Namespace) -> None:
         new_episode["length"] = plan.new_length
         new_episode_rows.append(new_episode)
 
-        old_stats = old_stats_by_ep.get(plan.src_episode_index)
-        new_stats = recompute_non_visual_stats(filtered_df, info["features"], old_stats)
+        old_stats = rename_stats_keys(old_stats_by_ep.get(plan.src_episode_index), column_rename_map)
+        new_stats = recompute_non_visual_stats(filtered_df, output_info["features"], old_stats)
         new_stats_rows.append({"episode_index": plan.dst_episode_index, "stats": new_stats})
 
         global_start_index += plan.new_length
@@ -1073,14 +1256,13 @@ def process_dataset(args: argparse.Namespace) -> None:
     if include_videos:
         filter_videos_parallel(kept_plans, args)
 
-    output_info = update_video_features_for_output_codec(dict(info), args.video_codec)
     output_info["total_frames"] = global_start_index
     output_info["splits"] = {"train": f"0:{len(new_episode_rows)}"}
     output_info["total_episodes"] = len(new_episode_rows)
     output_info["total_chunks"] = (
         max(1, episode_chunk(len(new_episode_rows) - 1, chunks_size) + 1) if new_episode_rows else 0
     )
-    output_info["total_videos"] = len(new_episode_rows) * len(get_video_keys(info))
+    output_info["total_videos"] = len(new_episode_rows) * len(get_video_keys(output_info))
 
     write_json(output_dir / "meta" / "info.json", output_info)
     write_jsonl(output_dir / "meta" / "episodes.jsonl", new_episode_rows)

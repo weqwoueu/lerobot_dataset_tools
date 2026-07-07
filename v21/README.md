@@ -195,7 +195,10 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     ```shell
     # kai0，piper双臂叠衣服任务的数据集。
     # 剔除静止帧的逻辑：
-        # 1. 默认判断信号为 concat(observation.state, action)，即 28 维；可用 --signal both|state|action 切换。
+        # 1. 默认判断信号为 concat(state_key, action_key)；可用 --signal both|state|action 切换。
+        #    state_key 默认自动匹配 observation.state 或 state，可用 --state_key 显式指定。
+        #    action_key 默认自动匹配 action 或 actions，可用 --action_key 显式指定。
+        #    输出列名默认沿用输入列名，可用 --output_state_key / --output_action_key 显式改名。
         # 2. 相邻帧比较：
             # 对第 t 帧，计算 abs(signal[t] - signal[t-1])。
             # 如果所有维度变化都 < eps，默认 eps=1e-3，则第 t 帧视为静止帧。
@@ -214,6 +217,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
             # 这样做是 OpenPI/DROID 风格，目的是避免采到动作 chunk 尾部很多静止动作的位置。
         # 若某个 episode 最终没有任何保留帧，脚本默认跳过该 episode，并在统计里记录。
         # 默认视频输出为 h264_nvenc + gop=2 + b_frames=0，适合训练时随机读取 mp4 帧。
+        # 若视频尺寸太小（例如 128x128），h264_nvenc 可能不支持，脚本会自动降级为 h264/libx264 保持原分辨率。
     python 11_filter_nonidle_frames.py \
         --dataset_dir /home/standard/workspace/test/kai0/data/standard_Task_A/base/piper_fold_tshirt_red \
         --workers 4 \
@@ -224,6 +228,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         # --trim_end_frames 0
         #   --dry_run # 预览
         #  --video_codec source # 严格沿用原lerobot数据集相同的视频编码格式。否则默认用h264_nvenc，在4090上编码速度快
+        #  --video_codec h264 # 强制使用 CPU libx264，适合 128x128 等 NVENC 不支持的小分辨率视频
         #  --gop 12 --b_frames 0 # 覆盖默认 GOP/B 帧设置
         #  --video_codec source --gop 2 --b_frames 0 # 沿用源编码器，但仍输出训练友好的关键帧/B帧设置
 
@@ -235,6 +240,15 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     python 11_filter_nonidle_frames.py \
         --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624 \
         --workers 8
+
+    python 11_filter_nonidle_frames.py \
+        --dataset_dir /home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/piper_peg_and_insertion \
+        --workers 8 \
+        --state_key state \
+        --action_key actions \
+        --output_state_key observation.state \
+        --output_action_key action
+    # 注意，输出的name为 observation.state / action 时，https://io-ai.tech/lerobot 才能正确显示出state/action曲线。
     ```
 
 # 12. kai0 的临时工具。用robocoin采的数据集，key name等参数和kai0的数据集不一致，用该工具对齐，除了视频编码方式不对齐。
@@ -313,9 +327,12 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     # 可用 --output-dir 指定输出目录；可用 --dry-run 只打印计划。
     ```
 
-# 17. 将lerobot v20转换成v21（未实际测试）
+# 17. 将lerobot v20转换成v21
     ```shell
-    python 17_convert_dataset_v20_to_v21.py
+    uv run --no-sync python 17_convert_dataset_v20_to_v21.py \
+        --dataset_dir /home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/collected_data/rank_0/id_0 \
+        --images_to_videos \
+        --output_dir /home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/lerobot_v21
     ```
 
 # 19. 读取 meta/info.json，自动遍历所有 dtype == "video" 的 camera mp4，检测疑似水平撕裂/错位/条带突变，并按 episode 汇总打印

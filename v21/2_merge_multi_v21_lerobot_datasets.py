@@ -36,15 +36,44 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 # new_repo_id = "/home/standard/workspace/test/kai0/data/my_Task_A/merge_kai0_advantage_b_t_std_dagger_b"
 # dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0526", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0527", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0528", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0601", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0602", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0603"]
 # new_repo_id = "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_0526_0603"
-# dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0603", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0604", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0605", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0608", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0609"]
+
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0603", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0604", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0605", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0608", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_yellow_0609"]
 # new_repo_id = "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609"
+
 # dataset_ids = ["/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_0526_0603_nonidle_delete", "/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
 # new_repo_id = "/home/standard/workspace/gitlab/openpi/.cache/huggingface/lerobot/standard/piperx/piperx_grab_bigbox_0526_0609_nonidle"
-# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0617", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0618", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0622", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0623", "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0624", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
-# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624"
-dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged_nonidle", "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
-new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0609_nonidle"
 
+# 全流程（部分排除了夹爪空张的数据）+ 短dagger，缺点是容易停在半路
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0617", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0618", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0622", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0623", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0624", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624"
+
+# 全流程（部分排除了夹爪空张的数据）
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_data_0529_merged_nonidle", 
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0603_0609_nonidle"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0529_0609_nonidle"
+
+# 0703
+# 长dagger
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0629", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0630", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0701", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0702", 
+#                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0703"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0629_0703"
+# 全流程 + 长dagger
+dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0629_0703_nonidle_delete",
+               "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0529_0609_nonidle"]
+new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle"
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t
 # /home/standard/workspace/test/kai0/data/Task_A/dagger

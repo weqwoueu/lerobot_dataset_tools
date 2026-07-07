@@ -35,6 +35,7 @@ import argparse
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+import importlib.util
 import json
 import logging
 import os
@@ -44,19 +45,48 @@ import tempfile
 from types import SimpleNamespace
 
 import datasets
-from lerobot.common.datasets.lerobot_dataset import CODEBASE_VERSION
-from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.common.datasets.utils import DEFAULT_VIDEO_PATH
-from lerobot.common.datasets.utils import EPISODES_STATS_PATH
-from lerobot.common.datasets.utils import INFO_PATH
-from lerobot.common.datasets.utils import STATS_PATH
-from lerobot.common.datasets.utils import load_stats
-from lerobot.common.datasets.utils import write_info
-from lerobot.common.datasets.v21.convert_stats import check_aggregate_stats
-from lerobot.common.datasets.v21.convert_stats import convert_stats
-from lerobot.common.datasets.video_utils import encode_video_frames
-from lerobot.common.datasets.video_utils import get_video_info
 from tqdm import tqdm
+
+
+def has_module(name: str) -> bool:
+    try:
+        return importlib.util.find_spec(name) is not None
+    except ModuleNotFoundError:
+        return False
+
+
+# LeRobot moved dataset modules from lerobot.common.datasets to lerobot.datasets.
+if has_module("lerobot.datasets.lerobot_dataset"):
+    from lerobot.datasets.lerobot_dataset import CODEBASE_VERSION
+    from lerobot.datasets.lerobot_dataset import LeRobotDataset
+    from lerobot.datasets.utils import DEFAULT_VIDEO_PATH
+    from lerobot.datasets.utils import EPISODES_STATS_PATH
+    from lerobot.datasets.utils import INFO_PATH
+    from lerobot.datasets.utils import STATS_PATH
+    from lerobot.datasets.utils import load_stats
+    from lerobot.datasets.utils import write_info
+    from lerobot.datasets.v21.convert_stats import check_aggregate_stats
+    from lerobot.datasets.v21.convert_stats import convert_stats
+    from lerobot.datasets.video_utils import encode_video_frames
+    from lerobot.datasets.video_utils import get_video_info
+elif has_module("lerobot.common.datasets.lerobot_dataset"):
+    from lerobot.common.datasets.lerobot_dataset import CODEBASE_VERSION
+    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+    from lerobot.common.datasets.utils import DEFAULT_VIDEO_PATH
+    from lerobot.common.datasets.utils import EPISODES_STATS_PATH
+    from lerobot.common.datasets.utils import INFO_PATH
+    from lerobot.common.datasets.utils import STATS_PATH
+    from lerobot.common.datasets.utils import load_stats
+    from lerobot.common.datasets.utils import write_info
+    from lerobot.common.datasets.v21.convert_stats import check_aggregate_stats
+    from lerobot.common.datasets.v21.convert_stats import convert_stats
+    from lerobot.common.datasets.video_utils import encode_video_frames
+    from lerobot.common.datasets.video_utils import get_video_info
+else:
+    raise ModuleNotFoundError(
+        "No compatible LeRobot dataset module found. Install a LeRobot version that provides "
+        "lerobot.datasets or lerobot.common.datasets."
+    )
 
 V20 = "v2.0"
 V21 = "v2.1"
