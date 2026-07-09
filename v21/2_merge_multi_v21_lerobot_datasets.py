@@ -70,10 +70,19 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 #                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0702", 
 #                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0703"]
 # new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0629_0703"
-# 全流程 + 长dagger
-dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0629_0703_nonidle_delete",
-               "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0529_0609_nonidle"]
-new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle"
+# # 全流程 + 长dagger
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0629_0703_nonidle_delete",
+#                "/home/standard/agilex/lerobot/piperx/piperx_grab_bigbox_yellow_0529_0609_nonidle"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle"
+
+# piper peg insertion
+dataset_ids = ["/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_0",
+               "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_1",
+               "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_2",
+               "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_3",
+               "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_4",
+               "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_5"]
+new_repo_id = "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/piper_peg_insertion_rot6d"
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t
 # /home/standard/workspace/test/kai0/data/Task_A/dagger
