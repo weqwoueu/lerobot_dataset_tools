@@ -350,6 +350,7 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
 # 20. 统计 LeRobot v2.1 数据集中夹爪相邻帧 delta。
 脚本只读取数据集 parquet，不修改原始数据。默认检查 0 基下标 6 和 13：
 left_gripper_pos / right_gripper_pos，并同时统计 observation.state 和 action。
+
     ```shell
     python 20_check_gripper_delta.py \
         --repo_id piperx/piperx_grab_bigbox_0526_0609_nonidle \
@@ -373,3 +374,99 @@ left_gripper_pos / right_gripper_pos，并同时统计 observation.state 和 act
         --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0624_nonidle_min30 \
         --terminal_start_episode 906
     ```
+
+# 24. 查找左臂在指定位置附近连续静止超过阈值的 episode
+    脚本只读取 LeRobot v2.1 数据集，不修改原始数据。默认使用 `observation.state`
+    前 7 维（左臂 6 个关节和左夹爪），右臂是否运动不影响判定。默认规则为：
+    关节位置误差不超过 `0.15 rad`、夹爪位置误差不超过 `0.01`、相邻帧变化不超过
+    `0.001`，且连续静止时间严格超过 `2s`。诊断 JSON 默认写入 `v21/output/`。
+
+    ```shell
+    python 24_find_left_pose_idle_episodes.py
+
+    python 24_find_left_pose_idle_episodes.py \
+        --dataset_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle \
+        --joint_position_tolerance 0.3 \
+        --gripper_position_tolerance 0.01 \
+        --stationary_tolerance 0.001 \
+        --min_duration_seconds 2.0 \
+        --output_json ./output/left_pose_idle_episodes.json
+
+    # 剔除掉筛选出的episode
+    python 1_remove_episodes.py \
+        --repo_id dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle \
+        --root /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle \
+        --episodes 50,61,65,69,77,81,82,95,115,118,121,123,126,129,130,134,136,465,482,489,553,571,600,601,605,607,608,617,624,627,630,633,640,659,662,667,669,672,673,675,676,680,682,683,696,697,702,705,707,714,720,727,734,736,739,742,751,752,756,757,758,759,761,763,764,766,767,778,786,791,792,794,799,802,806,815,820,821,839,842,846,847,849,850,852,856,861,864,865,868,869,871,872,874,875,888,967,1077,1094,1315,1371,1380,1399,1417,1425,1465,1478,1485,1538,1540,1592 \
+        --output_dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle_delete
+    ```
+
+# 25. 将双 Piper 关节 state 通过 FK 转换为末端位姿，并分析空间停留分布
+    脚本只读取 LeRobot v2.1 数据集，不修改原始数据。默认读取每一帧的
+    `observation.state`，按 `left_joint_1_pos` ~ `left_joint_6_pos` 和
+    `right_joint_1_pos` ~ `right_joint_6_pos` 分别执行 FK，夹爪维度不参与计算。
+    FK 使用 AgileX 官方 `piper_sdk.C_PiperForwardKinematics` 的 DH 参数，默认启用
+    关节 2、3 的 2 度补偿。位置单位为米，姿态为 RPY 弧度。
+
+    默认末端位置是 `joint6/link6` 原点。三维图按体素累计所有 state 的帧数并换算
+    停留时间；叠加散点图为了控制绘图开销会限制显示点数，但 FK、体素密度和统计
+    始终使用全部 state。
+
+    当前双臂安装默认以左臂基座为分析坐标系原点，右臂基座位于左臂 Y 轴负方向
+    `0.71 m`，并假定两臂基座坐标轴方向平行。因此默认右臂基座外参为
+    `0 -0.71 0 0 0 0`。
+
+    ```shell
+    # 使用脚本内置的数据集和输出目录，处理全部 episode
+    python 25_plot_piper_fk_distribution.py
+
+    # 显式指定数据集、输出目录和 1 cm 停留统计体素
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle \
+        --output-dir ./output/piper_fk_distribution \
+        --voxel-size 0.01
+
+    # 分析夹爪前端：在 joint6 局部 Z 方向增加 0.13503 m TCP 偏移
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /path/to/dataset \
+        --tcp-offset 0 0 0.13503
+
+    # 使用其他双臂安装时，可覆盖左右臂基座外参。
+    # 参数顺序为 X Y Z ROLL_DEG PITCH_DEG YAW_DEG，位置单位为米。
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /path/to/dataset \
+        --left-base-pose 0 0.30 0 0 0 0 \
+        --right-base-pose 0 -0.30 0 0 0 0
+
+    # 分别在两条机械臂自身的基座坐标系中分析，不应用 71 cm 安装偏移
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /path/to/dataset \
+        --left-base-pose 0 0 0 0 0 0 \
+        --right-base-pose 0 0 0 0 0 0
+
+    # 快速检查前 10 个 episode，不保存体积较大的全量位姿 NPZ
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /path/to/dataset \
+        --max-episodes 10 \
+        --no-save-poses
+
+    # 不生成交互 HTML，只保留静态 PNG/PDF 和统计文件
+    python 25_plot_piper_fk_distribution.py \
+        --dataset-dir /path/to/dataset \
+        --no-interactive-html
+    ```
+
+    默认输出到 `output/piper_fk_distribution/`：
+
+    - `end_effector_poses.npz`：每个 state 对应的左右臂完整末端位姿；
+    `left_pose` / `right_pose` 的列为 `x_m, y_m, z_m, roll_rad, pitch_rad, yaw_rad`，
+    并保留 `episode_index`、`frame_index` 和 `timestamp_s`。
+    - `end_effector_3d_interactive.html`：可拖拽旋转、滚轮缩放、悬停查看位置和
+    停留时间的交互式三维图；Plotly JS 已内嵌，离线打开即可使用。
+    - `end_effector_3d_distribution.png/.pdf`：左右臂三维体素停留密度和空间叠加图。
+    - `end_effector_density_projections.png/.pdf`：左右臂 XY、XZ、YZ 平面密度投影。
+    - `top_occupied_voxels.csv`：停留时间最长的体素中心、帧数、秒数和占比。
+    - `summary.json`：位置范围、均值、标准差、分位数、最密集体素和运行参数。
+
+    默认叠加图和 NPZ 位姿均位于左臂基座坐标系中。若实际安装还存在旋转、高度差
+    或 X 方向偏移，需要通过 `--right-base-pose` 提供完整外参。若使用旧版、未进行
+    2 度补偿的 Piper DH 模型，可添加 `--no-dh-offset`。
