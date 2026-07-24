@@ -5,8 +5,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import append_jsonlines, write_episode_stats, write_info
 
@@ -153,17 +151,25 @@ class DatasetCreator(ABC):
             num_episodes: Number of episodes to save
         """
         logger.info("Saving dataset files...")
+        global_start_index = 0
         for episode_idx in range(num_episodes):
             from_idx = dataset.episode_data_index["from"][episode_idx]
             to_idx = dataset.episode_data_index["to"][episode_idx]
 
             episode_data = dataset.hf_dataset.select(range(from_idx, to_idx))
 
-            def map_episode_index(row, ep_idx=episode_idx):
+            def map_episode_indices(row, row_index, ep_idx=episode_idx, global_start=global_start_index):
                 row["episode_index"] = ep_idx
+                row["frame_index"] = row_index
+                row["index"] = global_start + row_index
                 return row
 
-            episode_data = episode_data.map(map_episode_index, batched=False, load_from_cache_file=False)
+            episode_data = episode_data.map(
+                map_episode_indices,
+                batched=False,
+                with_indices=True,
+                load_from_cache_file=False,
+            )
 
             chunk_idx = episode_idx // dataset.meta.info["chunks_size"]
             data_dir = temp_root / "data" / f"chunk-{chunk_idx:03d}"
@@ -171,6 +177,7 @@ class DatasetCreator(ABC):
 
             episode_file = data_dir / f"episode_{episode_idx:06d}.parquet"
             episode_data.to_parquet(episode_file)
+            global_start_index += len(episode_data)
 
     @staticmethod
     def create_readme(

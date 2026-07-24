@@ -84,13 +84,29 @@ from dataset_creator.merged_dataset_creator import MergedDatasetCreator
 #                "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/id_5"]
 # new_repo_id = "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion_rot6d/lerobot/piper_peg_insertion_rot6d"
 
-# 0713
-dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0706",
-                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0707",
-                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0708",
-                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0709",
-                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0713"]
-new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0706_0713"
+# # 0713
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0706",
+#                 "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0707",
+#                 "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0708",
+#                 "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0709",
+#                 "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_data_yellow_0713"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0706_0713"
+
+# # 0720
+# dataset_ids = ["/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/v21/1",
+#                 "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/v21/2"]
+# new_repo_id = "/home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/v21/piper_peg_insertion"
+
+# # 0723
+# dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle_delete",
+#                 "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_nonidle_delete_ep796_1488_s"]
+# new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_base_b_bs_dagger_b"
+
+# 0723
+dataset_ids = ["/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_base_b_bs_dagger_b",
+                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_bt",
+                "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_bst"]
+new_repo_id = "/home/standard/agilex/lerobot/piperx/dagger/piperx_grab_bigbox_yellow_0529_0703_base_b_bs_bt_bst_dagger_b"
 
 # /home/standard/workspace/test/kai0/data/my_Task_A/advantage_kai0_repred_b_bt_reest_merged # kai0, advantage + advantage_t
 # /home/standard/workspace/test/kai0/data/Task_A/dagger

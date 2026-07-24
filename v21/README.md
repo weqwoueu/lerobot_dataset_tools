@@ -271,16 +271,65 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
     注意，代码中：
     1. 对 observation.images.top_head / observation.images.hand_left / observation.images.hand_right 下的视频进行翻转；
     2. 交换 observation.images.hand_left / observation.images.hand_right 两个文件夹；
+    3. state/action 固定为左右臂各 7 维（每臂 6 个关节角 + 1 个夹爪），先交换左右臂，再对指定关节取反；
+    4. `--negate-joints` 必须手动输入且从 1 开始计数。Piper 为 `1 4 6`，PiperX 为 `1 5 6`，脚本不会按机器人类型提供默认值；
+    5. state/action key 默认从 `meta/info.json` 自动识别，也可通过 `--state-key` / `--action-key` 显式覆盖；
+    6. 视频使用 FFmpeg `hflip` 滤镜重新编码，编码逻辑与 `11_filter_nonidle_frames.py` 对齐：默认 `h264_nvenc`、GOP=2、B 帧=0；
+    7. 视频先写临时文件，FFprobe 校验帧数与 episode length 一致后再原子替换；任何视频失败都会终止转换；
+    8. 开始写入前会打印实际采用的逐维映射、统计量公式、视频编码/映射和合并方案，便于自查。
     因此如果数据集不符合上面的要求，需要修改源码。
 
+    完整转换方案：
+    1. 输入/输出目录、键名及其来源（自动识别或参数覆盖）。
+    2. 14 个输出维度逐项对应到哪个输入维度、是否取反。
+    3. 视频映射：top_head -> top_head、hand_right -> hand_left、hand_left -> hand_right，均通过 FFmpeg 水平翻转并重新编码。
+    4. 各统计量的变换规则、直接复制的元数据，以及 full 模式后续合并步骤。
+        统计量按数学含义同步更新：mean：左右交换，指定关节取反。
+        std：只左右交换，不取反。
+        min/max：指定关节使用 new_min = -old_max、new_max = -old_min；其他维度正常交换。
+        q01/q99：指定关节使用 new_q01 = -old_q99、new_q99 = -old_q01。
+        成对统计量缺少一项时直接报错，避免生成错误统计数据。
+
     ```shell
-    # 仅生成镜像的数据集
+    # Piper：仅生成镜像数据集
     python 13_kai0_space_mirroring.py \
         create-mirror \
         --src-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec \
         --tgt-path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_s \
-        --num-workers 16
-    #   [--fps 30] [--robot-type agilex] [--left-dim 7] [--right-dim 7] [--num-workers 4] [--features-json /path/to/features.json] [--force]
+        --negate-joints 1 4 6 \
+        --num-workers 8
+
+    # PiperX
+    python 13_kai0_space_mirroring.py \
+        create-mirror \
+        --src-path /path/to/source \
+        --tgt-path /path/to/mirror \
+        --negate-joints 1 5 6
+
+    # 非常规 key name 时显式指定
+    python 13_kai0_space_mirroring.py \
+        create-mirror \
+        --src-path /path/to/source \
+        --tgt-path /path/to/mirror \
+        --state-key robot_state \
+        --action-key robot_action \
+        --negate-joints 1 4 6
+
+    # full 子命令同样必须指定 --negate-joints；merge 子命令不需要该参数。
+    # [--state-key KEY] [--action-key KEY] [--left-dim 7] [--right-dim 7] [--num-workers 4]
+    # [--video-codec h264_nvenc|source|...] [--gop 2] [--b-frames 0]
+    # [--nvenc-preset p4] [--nvenc-cq 23] [--av1-crf 30] [--av1-cpu-used 8]
+    # [--mp4v-qscale 3] [--ffmpeg-loglevel error]
+
+    # 使用 CPU H.264 编码；传 --video-codec source 可沿用源视频编码
+    python 13_kai0_space_mirroring.py \
+        create-mirror \
+        --src-path /path/to/source \
+        --tgt-path /path/to/mirror \
+        --negate-joints 1 4 6 \
+        --video-codec h264 \
+        --gop 2 \
+        --b-frames 0
     ```
 
 # 14. 时间增强。kai0/train_deploy_alignment/data_augment/time_scaling.py
@@ -290,8 +339,9 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         --tgt_path /home/standard/workspace/test/kai0/data/standard_Task_A/dagger/piper_fold_tshirt_task_a_aligned_recodec_t \
         --repo_id time_scaling_dataset \
         --extraction_factor 2 \
-        --num-workers 16
+        --num-workers 8
         # --extraction_factor 2，隔帧抽，视频加速1倍
+        # 默认用 FFmpeg 重新编码视频；如需沿用源编码可加 --video-codec source
     ```
 
 # 15. 导出数据集视频编码参数配置，供后续工具按指定参数生成视频
@@ -470,3 +520,44 @@ left_gripper_pos / right_gripper_pos，并同时统计 observation.state 和 act
     默认叠加图和 NPZ 位姿均位于左臂基座坐标系中。若实际安装还存在旋转、高度差
     或 X 方向偏移，需要通过 `--right-base-pose` 提供完整外参。若使用旧版、未进行
     2 度补偿的 Piper DH 模型，可添加 `--no-dh-offset`。
+
+# 26. 按闭区间抽取 episode，生成独立的 LeRobot v2.1 数据集
+
+    `--start-episode` 和 `--end-episode` 两端都包含。例如 `10..20` 会抽取 11 个
+    episode。输出中的 episode、全局帧 `index` 和使用到的 `task_index` 都会从 0
+    连续重编号；`frame_index`、`timestamp` 和业务数据保持不变。
+
+    视频按 `info.json` 的 `video_path` 模板复制并重命名，不执行 FFmpeg 重编码。
+    `episodes.jsonl`、`episodes_stats.jsonl`、`tasks.jsonl` 和 `info.json` 会同步重建。
+    若源数据集存在 `meta/stats.json`，会按选中 episode 重新聚合；非标准且可能失真的
+    `norm_stats.json` 不会复制。
+
+    ```shell
+    # 抽取源 episode 10..20，默认输出到同级 <dataset>_ep10_20
+    python 26_extract_episode_range.py \
+        --dataset-dir /path/to/dataset \
+        --start-episode 10 \
+        --end-episode 20
+
+    # 指定输出目录
+    python 26_extract_episode_range.py \
+        --dataset-dir /path/to/dataset \
+        --start-episode 10 \
+        --end-episode 20 \
+        --output-dir /path/to/dataset_ep10_20
+
+    # 完成全部预检并打印方案，不写入文件
+    python 26_extract_episode_range.py \
+        --dataset-dir /path/to/dataset \
+        --start-episode 10 \
+        --end-episode 20 \
+        --dry-run
+
+    # 新数据集生成并校验成功后，替换已有输出目录
+    python 26_extract_episode_range.py \
+        --dataset-dir /path/to/dataset \
+        --start-episode 10 \
+        --end-episode 20 \
+        --output-dir /path/to/dataset_ep10_20 \
+        --force
+    ```
