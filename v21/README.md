@@ -383,6 +383,9 @@ source my_env.sh # 配置 HF_LEROBOT_HOME 环境变量 # 进入 uv venv 虚拟�
         --dataset_dir /home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/collected_data/rank_0/id_0 \
         --images_to_videos \
         --output_dir /home/standard/workspace/gitlab/RLinf/temp/dataset/piper_peg_insertion/lerobot_v21
+
+    # 图片转视频默认使用 h264_nvenc；也可传 --vcodec hevc_nvenc。
+    # 对于边长小于 256 的视频，会自动回退到对应的 CPU h264/hevc 编码器。
     ```
 
 # 19. 读取 meta/info.json，自动遍历所有 dtype == "video" 的 camera mp4，检测疑似水平撕裂/错位/条带突变，并按 episode 汇总打印

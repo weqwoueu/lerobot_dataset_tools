@@ -32,16 +32,16 @@ Examples:
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
 import importlib.util
 import json
 import logging
 import os
-from pathlib import Path
 import shutil
+import subprocess
 import tempfile
+from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from types import SimpleNamespace
 
 import datasets
@@ -57,31 +57,29 @@ def has_module(name: str) -> bool:
 
 # LeRobot moved dataset modules from lerobot.common.datasets to lerobot.datasets.
 if has_module("lerobot.datasets.lerobot_dataset"):
-    from lerobot.datasets.lerobot_dataset import CODEBASE_VERSION
-    from lerobot.datasets.lerobot_dataset import LeRobotDataset
-    from lerobot.datasets.utils import DEFAULT_VIDEO_PATH
-    from lerobot.datasets.utils import EPISODES_STATS_PATH
-    from lerobot.datasets.utils import INFO_PATH
-    from lerobot.datasets.utils import STATS_PATH
-    from lerobot.datasets.utils import load_stats
-    from lerobot.datasets.utils import write_info
-    from lerobot.datasets.v21.convert_stats import check_aggregate_stats
-    from lerobot.datasets.v21.convert_stats import convert_stats
-    from lerobot.datasets.video_utils import encode_video_frames
-    from lerobot.datasets.video_utils import get_video_info
+    from lerobot.datasets.lerobot_dataset import CODEBASE_VERSION, LeRobotDataset
+    from lerobot.datasets.utils import (
+        DEFAULT_VIDEO_PATH,
+        EPISODES_STATS_PATH,
+        INFO_PATH,
+        STATS_PATH,
+        load_stats,
+        write_info,
+    )
+    from lerobot.datasets.v21.convert_stats import check_aggregate_stats, convert_stats
+    from lerobot.datasets.video_utils import encode_video_frames, get_video_info
 elif has_module("lerobot.common.datasets.lerobot_dataset"):
-    from lerobot.common.datasets.lerobot_dataset import CODEBASE_VERSION
-    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-    from lerobot.common.datasets.utils import DEFAULT_VIDEO_PATH
-    from lerobot.common.datasets.utils import EPISODES_STATS_PATH
-    from lerobot.common.datasets.utils import INFO_PATH
-    from lerobot.common.datasets.utils import STATS_PATH
-    from lerobot.common.datasets.utils import load_stats
-    from lerobot.common.datasets.utils import write_info
-    from lerobot.common.datasets.v21.convert_stats import check_aggregate_stats
-    from lerobot.common.datasets.v21.convert_stats import convert_stats
-    from lerobot.common.datasets.video_utils import encode_video_frames
-    from lerobot.common.datasets.video_utils import get_video_info
+    from lerobot.common.datasets.lerobot_dataset import CODEBASE_VERSION, LeRobotDataset
+    from lerobot.common.datasets.utils import (
+        DEFAULT_VIDEO_PATH,
+        EPISODES_STATS_PATH,
+        INFO_PATH,
+        STATS_PATH,
+        load_stats,
+        write_info,
+    )
+    from lerobot.common.datasets.v21.convert_stats import check_aggregate_stats, convert_stats
+    from lerobot.common.datasets.video_utils import encode_video_frames, get_video_info
 else:
     raise ModuleNotFoundError(
         "No compatible LeRobot dataset module found. Install a LeRobot version that provides "
@@ -90,6 +88,9 @@ else:
 
 V20 = "v2.0"
 V21 = "v2.1"
+NVENC_CODECS = {"h264_nvenc", "hevc_nvenc"}
+NVENC_MIN_SIDE_FOR_SCRIPT = 256
+WARNED_NVENC_FALLBACKS: set[tuple[str, int, int, str]] = set()
 
 
 logging.basicConfig(
@@ -185,9 +186,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--vcodec",
-        default="libsvtav1",
-        choices=["h264", "hevc", "libsvtav1"],
-        help="Video codec for --images_to_videos.",
+        default="h264_nvenc",
+        choices=["h264_nvenc", "hevc_nvenc", "h264", "hevc", "libsvtav1"],
+        help="Video codec for --images_to_videos. Defaults to h264_nvenc.",
     )
     parser.add_argument(
         "--overwrite",
@@ -384,13 +385,105 @@ def copy_dataset(src: Path, dst: Path, *, overwrite: bool) -> None:
     shutil.copytree(src, dst)
 
 
-def save_episode_frames(dataset: datasets.Dataset, image_key: str, frames_dir: Path) -> None:
+def save_episode_frames(dataset: datasets.Dataset, image_key: str, frames_dir: Path) -> tuple[int, int]:
     frames_dir.mkdir(parents=True, exist_ok=True)
+    frame_size: tuple[int, int] | None = None
     for frame_index, row in enumerate(dataset):
         image = row[image_key]
         if image is None:
             raise ValueError(f"Image value is None for key={image_key} frame_index={frame_index}")
-        image.convert("RGB").save(frames_dir / f"frame_{frame_index:06d}.png")
+        rgb_image = image.convert("RGB")
+        if frame_size is None:
+            frame_size = rgb_image.size
+        elif rgb_image.size != frame_size:
+            raise ValueError(
+                f"Image size changed for key={image_key} frame_index={frame_index}: "
+                f"{rgb_image.size} != {frame_size}"
+            )
+        rgb_image.save(frames_dir / f"frame_{frame_index:06d}.png")
+
+    if frame_size is None:
+        raise ValueError(f"No image frames found for key={image_key}")
+    return frame_size
+
+
+def resolve_output_vcodec(vcodec: str, width: int, height: int) -> str:
+    fallback_map = {"h264_nvenc": "h264", "hevc_nvenc": "hevc"}
+    fallback_vcodec = fallback_map.get(vcodec)
+    if fallback_vcodec is None or (
+        width >= NVENC_MIN_SIDE_FOR_SCRIPT and height >= NVENC_MIN_SIDE_FOR_SCRIPT
+    ):
+        return vcodec
+
+    warning_key = (vcodec, width, height, fallback_vcodec)
+    if warning_key not in WARNED_NVENC_FALLBACKS:
+        WARNED_NVENC_FALLBACKS.add(warning_key)
+        logger.warning(
+            "视频尺寸 %dx%d 小于 NVENC 稳定编码阈值 %d，将 %s 自动降级为 %s 以保持原分辨率",
+            width,
+            height,
+            NVENC_MIN_SIDE_FOR_SCRIPT,
+            vcodec,
+            fallback_vcodec,
+        )
+    return fallback_vcodec
+
+
+def build_nvenc_ffmpeg_command(
+    frames_dir: Path,
+    video_path: Path,
+    fps: int | float,
+    vcodec: str,
+) -> list[str]:
+    if vcodec in NVENC_CODECS:
+        codec_args = ["-c:v", vcodec, "-preset", "p4", "-rc", "vbr", "-cq", "23", "-bf", "0"]
+    elif vcodec == "h264":
+        codec_args = ["-c:v", "libx264", "-bf", "0"]
+    elif vcodec == "hevc":
+        codec_args = ["-c:v", "libx265", "-bf", "0"]
+    else:
+        raise ValueError(f"Unsupported NVENC/fallback codec: {vcodec}")
+
+    return [
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-framerate",
+        str(fps),
+        "-i",
+        str(frames_dir / "frame_%06d.png"),
+        *codec_args,
+        "-g",
+        "2",
+        "-keyint_min",
+        "2",
+        "-sc_threshold",
+        "0",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        str(video_path),
+    ]
+
+
+def encode_episode_video_frames(
+    frames_dir: Path,
+    video_path: Path,
+    fps: int | float,
+    vcodec: str,
+    frame_size: tuple[int, int],
+) -> None:
+    if vcodec not in NVENC_CODECS:
+        encode_video_frames(frames_dir, video_path, fps, vcodec=vcodec, overwrite=True)
+        return
+
+    width, height = frame_size
+    output_vcodec = resolve_output_vcodec(vcodec, width, height)
+    video_path.parent.mkdir(parents=True, exist_ok=True)
+    command = build_nvenc_ffmpeg_command(frames_dir, video_path, fps, output_vcodec)
+    subprocess.run(command, check=True)
 
 
 def rewrite_parquet_without_image_keys(dataset: datasets.Dataset, parquet_path: Path, image_keys: list[str]) -> None:
@@ -411,9 +504,15 @@ def convert_episode_images_to_videos(plan: SimpleNamespace, episode: dict, vcode
         temp_root = Path(temp_dir)
         for image_key in plan.image_keys:
             frames_dir = temp_root / image_key
-            save_episode_frames(episode_dataset, image_key, frames_dir)
+            frame_size = save_episode_frames(episode_dataset, image_key, frames_dir)
             video_path = plan.output_dir / get_video_file_path(plan.info, episode_index, image_key)
-            encode_video_frames(frames_dir, video_path, plan.info["fps"], vcodec=vcodec, overwrite=True)
+            encode_episode_video_frames(
+                frames_dir,
+                video_path,
+                plan.info["fps"],
+                vcodec,
+                frame_size,
+            )
 
     rewrite_parquet_without_image_keys(episode_dataset, parquet_path, plan.image_keys)
 
@@ -439,7 +538,7 @@ def convert_dataset_images_to_videos(
     *,
     image_keys: list[str] | None = None,
     num_workers: int = 4,
-    vcodec: str = "libsvtav1",
+    vcodec: str = "h264_nvenc",
     overwrite: bool = False,
     dry_run: bool = False,
 ) -> SimpleNamespace:
@@ -453,6 +552,18 @@ def convert_dataset_images_to_videos(
 
     if dry_run:
         return plan
+
+    if vcodec in NVENC_CODECS:
+        if shutil.which("ffmpeg") is None:
+            raise RuntimeError("缺少视频处理工具: ffmpeg")
+        encoder_list = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-encoders"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        if vcodec not in encoder_list:
+            raise RuntimeError(f"当前 ffmpeg 不支持编码器: {vcodec}")
 
     copy_dataset(plan.dataset_dir, plan.output_dir, overwrite=overwrite)
 
